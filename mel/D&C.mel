@@ -1,0 +1,28 @@
+//复制一个物体并保持干净；
+
+string $_attrs[];
+string $sel[]= `ls -sl`;
+int $objs = `size $sel`;
+int $num;
+for ($num = 0; $num < $objs;  $num ++)
+ {
+	select -r $sel[$num] ;
+    string $attrs[]=`listAttr -k`; //获取选择物体的可key帧属性；
+    setAttr -lock off ($sel[$num] + ".translateX");
+
+}
+
+
+global proc findAttributes()
+{
+	string $poly[] = `polySphere -r 1 -sx 20 -sy 20 -ax 0 1 0 -cuv 2 -ch 1`;
+    $_attrs[]=`listAttr -k`; //获取选择物体的可key帧属性；
+}
+
+int $maxSel=`size  $attrs`;
+int $x;
+for ($x=0; $x < $maxSel; $x ++) 
+{
+
+	print $x;
+}

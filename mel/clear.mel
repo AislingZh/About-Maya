@@ -1,0 +1,10 @@
+// clear polygons;
+string $sel[]= `ls -sl`;
+int $maxSel=`size  $sel`;
+int $x;
+for($x=0;$x<$maxSel;$x++)
+{
+	polyNormalPerVertex -ufn true;
+	polySoftEdge -a 180 -ch 1 $sel[$x];
+	delete -ch;
+}

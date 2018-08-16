@@ -1,0 +1,176 @@
+////////////////thumb1/////////////
+float $lthumb1_x=`getAttr "L_ThumbFinger1_OffsetGRP.jointOrientX"`;
+float $lthumb1_y=`getAttr "L_ThumbFinger1_OffsetGRP.jointOrientY"`;
+float $lthumb1_z=`getAttr "L_ThumbFinger1_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_ThumbFinger1_OffsetGRP.jointOrientX" $lthumb1_x;
+setAttr "R_ThumbFinger1_OffsetGRP.jointOrientY" $lthumb1_y;
+setAttr "R_ThumbFinger1_OffsetGRP.jointOrientZ" $lthumb1_z;
+
+////////////////thumb2/////////////
+float $lthumb2_x=`getAttr "L_ThumbFinger2_OffsetGRP.jointOrientX"`;
+float $lthumb2_y=`getAttr "L_ThumbFinger2_OffsetGRP.jointOrientY"`;
+float $lthumb2_z=`getAttr "L_ThumbFinger2_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_ThumbFinger2_OffsetGRP.jointOrientX" $lthumb2_x;
+setAttr "R_ThumbFinger2_OffsetGRP.jointOrientY" $lthumb2_y;
+setAttr "R_ThumbFinger2_OffsetGRP.jointOrientZ" $lthumb2_z;
+
+
+////////////////thumb3/////////////
+float $lthumb3_x=`getAttr "L_ThumbFinger3_OffsetGRP.jointOrientX"`;
+float $lthumb3_y=`getAttr "L_ThumbFinger3_OffsetGRP.jointOrientY"`;
+float $lthumb3_z=`getAttr "L_ThumbFinger3_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_ThumbFinger3_OffsetGRP.jointOrientX" $lthumb3_x;
+setAttr "R_ThumbFinger3_OffsetGRP.jointOrientY" $lthumb3_y;
+setAttr "R_ThumbFinger3_OffsetGRP.jointOrientZ" $lthumb3_z;
+
+////////////////indexRoot/////////////
+float $lindexroot_x=`getAttr "L_IndexRoot_OffsetGRP.jointOrientX"`;
+float $lindexroot_y=`getAttr "L_IndexRoot_OffsetGRP.jointOrientY"`;
+float $lindexroot_z=`getAttr "L_IndexRoot_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_IndexRoot_OffsetGRP.jointOrientX" $lindexroot_x;
+setAttr "R_IndexRoot_OffsetGRP.jointOrientY" $lindexroot_y;
+setAttr "R_IndexRoot_OffsetGRP.jointOrientZ" $lindexroot_z;
+
+
+////////////////index1/////////////
+float $lindex1_x=`getAttr "L_IndexFinger1_OffsetGRP.jointOrientX"`;
+float $lindex1_y=`getAttr "L_IndexFinger1_OffsetGRP.jointOrientY"`;
+float $lindex1_z=`getAttr "L_IndexFinger1_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_IndexFinger1_OffsetGRP.jointOrientX" $lindex1_x;
+setAttr "R_IndexFinger1_OffsetGRP.jointOrientY" $lindex1_y;
+setAttr "R_IndexFinger1_OffsetGRP.jointOrientZ" $lindex1_z;
+
+////////////////index2/////////////
+float $lindex2_x=`getAttr "L_IndexFinger2_OffsetGRP.jointOrientX"`;
+float $lindex2_y=`getAttr "L_IndexFinger2_OffsetGRP.jointOrientY"`;
+float $lindex2_z=`getAttr "L_IndexFinger2_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_IndexFinger2_OffsetGRP.jointOrientX" $lindex2_x;
+setAttr "R_IndexFinger2_OffsetGRP.jointOrientY" $lindex2_y;
+setAttr "R_IndexFinger2_OffsetGRP.jointOrientZ" $lindex2_z;
+
+////////////////index3/////////////
+float $lindex3_x=`getAttr "L_IndexFinger3_OffsetGRP.jointOrientX"`;
+float $lindex3_y=`getAttr "L_IndexFinger3_OffsetGRP.jointOrientY"`;
+float $lindex3_z=`getAttr "L_IndexFinger3_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_IndexFinger3_OffsetGRP.jointOrientX" $lindex3_x;
+setAttr "R_IndexFinger3_OffsetGRP.jointOrientY" $lindex3_y;
+setAttr "R_IndexFinger3_OffsetGRP.jointOrientZ" $lindex3_z;
+
+////////////////middleRoot/////////////
+float $lmiddleroot_x=`getAttr "L_MiddleRoot_OffsetGRP.jointOrientX"`;
+float $lmiddleroot_y=`getAttr "L_MiddleRoot_OffsetGRP.jointOrientY"`;
+float $lmiddleroot_z=`getAttr "L_MiddleRoot_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_MiddleRoot_OffsetGRP.jointOrientX" $lmiddleroot_x;
+setAttr "R_MiddleRoot_OffsetGRP.jointOrientY" $lmiddleroot_y;
+setAttr "R_MiddleRoot_OffsetGRP.jointOrientZ" $lmiddleroot_z;
+
+
+////////////////middle1/////////////
+float $lmiddle1_x=`getAttr "L_MiddleFinger1_OffsetGRP.jointOrientX"`;
+float $lmiddle1_y=`getAttr "L_MiddleFinger1_OffsetGRP.jointOrientY"`;
+float $lmiddle1_z=`getAttr "L_MiddleFinger1_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_MiddleFinger1_OffsetGRP.jointOrientX" $lmiddle1_x;
+setAttr "R_MiddleFinger1_OffsetGRP.jointOrientY" $lmiddle1_y;
+setAttr "R_MiddleFinger1_OffsetGRP.jointOrientZ" $lmiddle1_z;
+
+////////////////middle2/////////////
+float $lmiddle2_x=`getAttr "L_MiddleFinger2_OffsetGRP.jointOrientX"`;
+float $lmiddle2_y=`getAttr "L_MiddleFinger2_OffsetGRP.jointOrientY"`;
+float $lmiddle2_z=`getAttr "L_MiddleFinger2_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_MiddleFinger2_OffsetGRP.jointOrientX" $lmiddle2_x;
+setAttr "R_MiddleFinger2_OffsetGRP.jointOrientY" $lmiddle2_y;
+setAttr "R_MiddleFinger2_OffsetGRP.jointOrientZ" $lmiddle2_z;
+
+////////////////middle3/////////////
+float $lmiddle3_x=`getAttr "L_MiddleFinger3_OffsetGRP.jointOrientX"`;
+float $lmiddle3_y=`getAttr "L_MiddleFinger3_OffsetGRP.jointOrientY"`;
+float $lmiddle3_z=`getAttr "L_MiddleFinger3_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_MiddleFinger3_OffsetGRP.jointOrientX" $lmiddle3_x;
+setAttr "R_MiddleFinger3_OffsetGRP.jointOrientY" $lmiddle3_y;
+setAttr "R_MiddleFinger3_OffsetGRP.jointOrientZ" $lmiddle3_z;
+
+////////////////ringRoot/////////////
+float $lringroot_x=`getAttr "L_RingRoot_OffsetGRP.jointOrientX"`;
+float $lringroot_y=`getAttr "L_RingRoot_OffsetGRP.jointOrientY"`;
+float $lringroot_z=`getAttr "L_RingRoot_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_RingRoot_OffsetGRP.jointOrientX" $lringroot_x;
+setAttr "R_RingRoot_OffsetGRP.jointOrientY" $lringroot_y;
+setAttr "R_RingRoot_OffsetGRP.jointOrientZ" $lringroot_z;
+
+
+////////////////ring1/////////////
+float $lring1_x=`getAttr "L_RingFinger1_OffsetGRP.jointOrientX"`;
+float $lring1_y=`getAttr "L_RingFinger1_OffsetGRP.jointOrientY"`;
+float $lring1_z=`getAttr "L_RingFinger1_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_RingFinger1_OffsetGRP.jointOrientX" $lring1_x;
+setAttr "R_RingFinger1_OffsetGRP.jointOrientY" $lring1_y;
+setAttr "R_RingFinger1_OffsetGRP.jointOrientZ" $lring1_z;
+
+////////////////ring2/////////////
+float $lring2_x=`getAttr "L_RingFinger2_OffsetGRP.jointOrientX"`;
+float $lring2_y=`getAttr "L_RingFinger2_OffsetGRP.jointOrientY"`;
+float $lring2_z=`getAttr "L_RingFinger2_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_RingFinger2_OffsetGRP.jointOrientX" $lring2_x;
+setAttr "R_RingFinger2_OffsetGRP.jointOrientY" $lring2_y;
+setAttr "R_RingFinger2_OffsetGRP.jointOrientZ" $lring2_z;
+
+////////////////ring3/////////////
+float $lring3_x=`getAttr "L_RingFinger3_OffsetGRP.jointOrientX"`;
+float $lring3_y=`getAttr "L_RingFinger3_OffsetGRP.jointOrientY"`;
+float $lring3_z=`getAttr "L_RingFinger3_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_RingFinger3_OffsetGRP.jointOrientX" $lring3_x;
+setAttr "R_RingFinger3_OffsetGRP.jointOrientY" $lring3_y;
+setAttr "R_RingFinger3_OffsetGRP.jointOrientZ" $lring3_z;
+
+////////////////pinkyRoot/////////////
+float $lpinkyroot_x=`getAttr "L_PinkyRoot_OffsetGRP.jointOrientX"`;
+float $lpinkyroot_y=`getAttr "L_PinkyRoot_OffsetGRP.jointOrientY"`;
+float $lpinkyroot_z=`getAttr "L_PinkyRoot_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_PinkyRoot_OffsetGRP.jointOrientX" $lpinkyroot_x;
+setAttr "R_PinkyRoot_OffsetGRP.jointOrientY" $lpinkyroot_y;
+setAttr "R_PinkyRoot_OffsetGRP.jointOrientZ" $lpinkyroot_z;
+
+
+////////////////pinky1/////////////
+float $lpinky1_x=`getAttr "L_PinkyFinger1_OffsetGRP.jointOrientX"`;
+float $lpinky1_y=`getAttr "L_PinkyFinger1_OffsetGRP.jointOrientY"`;
+float $lpinky1_z=`getAttr "L_PinkyFinger1_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_PinkyFinger1_OffsetGRP.jointOrientX" $lpinky1_x;
+setAttr "R_PinkyFinger1_OffsetGRP.jointOrientY" $lpinky1_y;
+setAttr "R_PinkyFinger1_OffsetGRP.jointOrientZ" $lpinky1_z;
+
+////////////////pinky2/////////////
+float $lpinky2_x=`getAttr "L_PinkyFinger2_OffsetGRP.jointOrientX"`;
+float $lpinky2_y=`getAttr "L_PinkyFinger2_OffsetGRP.jointOrientY"`;
+float $lpinky2_z=`getAttr "L_PinkyFinger2_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_PinkyFinger2_OffsetGRP.jointOrientX" $lpinky2_x;
+setAttr "R_PinkyFinger2_OffsetGRP.jointOrientY" $lpinky2_y;
+setAttr "R_PinkyFinger2_OffsetGRP.jointOrientZ" $lpinky2_z;
+
+////////////////pinky3/////////////
+float $lpinky3_x=`getAttr "L_PinkyFinger3_OffsetGRP.jointOrientX"`;
+float $lpinky3_y=`getAttr "L_PinkyFinger3_OffsetGRP.jointOrientY"`;
+float $lpinky3_z=`getAttr "L_PinkyFinger3_OffsetGRP.jointOrientZ"`;
+
+setAttr "R_PinkyFinger3_OffsetGRP.jointOrientX" $lpinky3_x;
+setAttr "R_PinkyFinger3_OffsetGRP.jointOrientY" $lpinky3_y;
+setAttr "R_PinkyFinger3_OffsetGRP.jointOrientZ" $lpinky3_z;
+

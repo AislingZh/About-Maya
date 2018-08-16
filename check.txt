@@ -1,0 +1,4 @@
+Check file
+1.win- expression ---delete whith "xgm";
+
+2. 切头， 模型拓扑， 按是否缓存分类；

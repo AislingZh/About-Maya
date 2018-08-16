@@ -1,0 +1,12 @@
+string $selJnt[]=`ls -sl -type "joint"`;
+int $maxSelJnt=`size  $selJnt`;
+int $x;
+for($x=0;$x<$maxSelJnt;$x++)
+{
+   
+spaceLocator -p 0 0 0 -n ($selJnt[$x]+"Loc");
+vector $jntTran=`xform -q -ws -t $selJnt[$x]` ;
+vector $jntRo=`xform -q -ws -ro $selJnt[$x]` ;
+xform -ws -t ($jntTran.x) ($jntTran.y) ($jntTran.z) ($selJnt[$x]+"Loc");
+xform -ws -ro($jntRo.x) ($jntRo.y) ($jntRo.z) ($selJnt[$x]+"Loc");
+}

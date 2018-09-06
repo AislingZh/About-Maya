@@ -32,10 +32,23 @@ def CtrlEditUI():
     cmds.menuItem( 'Application..."', label='"About' )
 
 
+
+
+    cmds.rowLayout(numberOfColumns=3, columnAttach = (1, "right", 2), columnWidth = (1, 100))
+    cmds.text(label="mirror temp:   ", w=200 )
+    cmds.textField("mirTemp", w = 150, text="h_")
+
+    cmds.setParent( '..' )
+
+    cmds.rowLayout(numberOfColumns=3, columnAttach = (1, "both", 2), columnWidth = (50, 100))
+    cmds.text(label="镜像控制器:   " , w=200)
+    cmds.button(label="左→右", h = 20, w=150, command = "mirrorCtrlsL_to_R()")
+    cmds.button(label="右→左", h = 20, w=150, command = "mirrorCtrlsR_to_L()")
+    
+    cmds.setParent( '..' )
     cmds.radioButtonGrp("all_select_type", label = 'Select type:', labelArray3=['select', 'hierarchy', 'all'], numberOfRadioButtons = 3, columnWidth4 = (80, 70, 70, 70), select = 1)
-
-
-
+    
+    cmds.setParent( '..' )
     cmds.frameLayout("Scale:", collapsable = True, labelVisible=1, marginWidth=5,marginHeight=5,borderStyle='etchedOut' )
     cmds.columnLayout(adj=1)
 
@@ -56,7 +69,8 @@ def CtrlEditUI():
 
     cmds.separator( height=10,style='in' )
 
-    # cmds.setParent( '..' )
+    cmds.setParent( '..' )
+    cmds.setParent( '..' )
 
 
     cmds.frameLayout("Translate:", collapsable = True, labelVisible = 1, marginWidth = 5, marginHeight = 5, borderStyle = 'stchedOut')
@@ -79,6 +93,9 @@ def CtrlEditUI():
     tran_button = cmds.button(label = "Move",h=25, command = "changeTran()")
 
     cmds.separator(height = 10, style = 'in')
+
+    cmds.setParent( '..' )
+    cmds.setParent( '..' )
 
     cmds.frameLayout("Rotate:", collapsable = True, labelVisible = 1, marginWidth = 5, marginHeight = 5, borderStyle = 'stchedOut')
     cmds.separator(height = 10, style = 'in')
@@ -105,6 +122,9 @@ def CtrlEditUI():
     shape_button = cmds.button(label = "ChangeShape", h = 25, command = "changeShape()")
     cmds.separator(height = 10, style = 'in')
 
+    cmds.setParent( '..' )
+    cmds.setParent( '..' )
+
     cmds.frameLayout("Color:", collapsable = True, labelVisible = 1, marginWidth = 5, marginHeight = 5, borderStyle = 'stchedOut')
     cmds.separator(height = 10, style = 'in')
     red_button = cmds.button(label = "red", h = 25, command = "redColorSet()")
@@ -113,6 +133,19 @@ def CtrlEditUI():
     color_slider= cmds.colorIndexSliderGrp('cvColorCISG',label='Curve Color:', min=1, max=32, value=1,columnWidth3=(80,50,10) )
     color_button = cmds.button(label = "SetColor", h = 25, command = "changeColor()")
     cmds.separator(height = 10, style = 'in')
+
+    # cmds.setParent( '..' )
+    # cmds.setParent( '..' )
+    # cmds.rowLayout(numberOfColumns=3, columnAttach = (1, "right", 2), columnWidth = (1, 100))
+    # cmds.text(label="mirror temp:   ", w=200 )
+    # cmds.textField("mirTemp", w = 150, text="_h")
+
+    # cmds.setParent( '..' )
+
+    # cmds.rowLayout(numberOfColumns=3, columnAttach = (1, "both", 2), columnWidth = (50, 100))
+    # cmds.text(label="镜像控制器:   " , w=200)
+    # cmds.button(label="左→右", h = 20, w=150, command = "")
+    # cmds.button(label="右→左", h = 20, w=150, command = "")
 
     cmds.showWindow(main_window)
 
@@ -225,4 +258,46 @@ def UpdateSelObj():
     except Exception as e:
         raise e
 
+def mirrorCtrlsR_to_L():
+    mirTemp = cmds.textField("mirTemp", q = True, text = True)
+    mirStrA = mirTemp.replace('h', 'R')
+    mirStrB = mirTemp.replace('h', 'L')
+    mirrorCtrls(mirStrA, mirStrB)
+
+def mirrorCtrlsL_to_R():
+    mirTemp = cmds.textField("mirTemp", q = True, text = True)
+    mirStrA = mirTemp.replace('h', 'R')
+    mirStrB = mirTemp.replace('h', 'L')
+    mirrorCtrls(mirStrB, mirStrA)
+
+#通过控制器的set来获取所有的控制器曲线，再进行镜像
+def mirrorCtrls(strA, strB):
+    cmds.undoInfo(openChunk=True)
+    try:
+        masterCtrlSetName = 'CTRL_SET'
+        if cmds.objExists(masterCtrlSetName):
+            setMemberList = cmds.listConnections(masterCtrlSetName+'.dagSetMembers', s=True, d=False)
+            for member in setMemberList:
+                if strA in member and member.replace(strA, strB) in setMemberList:
+                    pointNumA = cmds.getAttr(member+'.controlPoints', size=True)
+                    pointNumB = cmds.getAttr(member.replace(strA, strB)+'.controlPoints', size=True)
+                    if pointNumA==pointNumB:
+                        for point in range(pointNumA):
+                            pos = cmds.pointPosition(member+'.cv['+str(point)+']', w=True)
+                            cmds.move(-pos[0], pos[1], pos[2], member.replace(strA, strB)+'.cv['+str(point)+']', a=True)
+        else:
+            message = QtGui.QMessageBox(self)
+            message.setText(u'错误：\n'+masterCtrlSetName+u'不存在，请检查文件是否损坏！！！')
+            message.setWindowTitle('Error!')
+            message.setIcon(QtGui.QMessageBox.Warning)
+            button = QtGui.QPushButton()
+            button.setText('OK')
+            message.addButton(button, QtGui.QMessageBox.DestructiveRole)
+            message.setDefaultButton(button)
+            message.exec_()
+            return
+        cmds.undoInfo(closeChunk=True)
+    except:
+        print 'something wrong…'
+        cmds.undoInfo(closeChunk=True)
 CtrlEditUI()

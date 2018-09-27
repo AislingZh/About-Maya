@@ -1,0 +1,1418 @@
+//////////////////////////////////////
+// Script Name:  yj_FaicalRigSystem	//                     
+// Author: YE JUN                   //       
+// Last Updated: 2017/07/18       	//
+//////////////////////////////////////
+
+global proc yj_FaicalRigSystem()                                                                                                                                         
+{
+$bgc1 = {.3,.4,.5};  //framelayout
+$bgc2 = {.2,.5,.8};  //button
+$bgc3 = {.16,.2,.24}; // columnlayout
+if(`window -exists yj_FaicalRigSystemWindow`)
+	deleteUI yj_FaicalRigSystemWindow;
+	window  -menuBar true -width 200 -t "yj_facial_System V1.0" -bgc $bgc3[0] $bgc3[1] $bgc3[2] yj_FaicalRigSystemWindow;
+	 	menu -label "Edit" -helpMenu true ;
+	 		menuItem -label "setting " -c "yj_aboutyjRig";	
+	 		menuItem -label "About yj_facial_System ... " -c "yj_aboutyjRig";	
+    columnLayout -columnAttach "both" 1 -rowSpacing 2 -columnWidth 280 -bgc  $bgc3[0] $bgc3[1] $bgc3[2] ;        
+    frameLayout -collapsable 1 -label "定位模版" -labelAlign "bottom" -bgc  $bgc1[0] $bgc1[1] $bgc1[2] -bv 0 -bgs 0 -fn "fixedWidthFont" -mw 5 -mh 5 -ebg 1  ;		
+    string $a0=`columnLayout -columnAttach "both" 2 -rowSpacing 2 -columnWidth 270 `;
+    string $a1 = `separator -w 265 -h 5 -style "single"`;
+//    string $a2 =`textFieldButtonGrp -label "初始目标体：" -text "" -buttonLabel "    载入   " -cw3 80 100 80 -bc "textFieldButtonGrp -e -text `yjReturnSelectall(\"getDWE_TFBG\")` getDWE_TFBG " getDWE_TFBG`;    	
+    string $a3 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "导入模版        " -h 30 -c "yj_inputFaceJnt;"`;	
+	rowLayout -numberOfColumns 2 -columnWidth2 120 120 -adjustableColumn 2 -columnAlign  1 "right" -columnAttach 1 "both"   0 -columnAttach 2 "both"  0 ;	
+//    string $a4 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "镜像 R→L  " -h 30 -c "yj_mirror_rtol(1,1,1.0);"`;	
+//    string $a5 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "镜像 L→R  " -h 30 -c "yj_mirror_ltor(1,1,1.0);"`;	
+    string $a4 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "镜像 R→L  " -h 30 -c "yj_mirrFaceJnt_rtol_pos;"`;	
+    string $a5 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "镜像 L→R  " -h 30 -c "yj_mirrFaceJnt_ltor_pos;"`;	    
+        setParent ..;		
+	rowLayout -numberOfColumns 2 -columnWidth2 120 120 -adjustableColumn 2 -columnAlign  1 "right" -columnAttach 1 "both"   0 -columnAttach 2 "both"  0 ;		
+    string $a6 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "蒙皮  " -h 30 -c "yj_skinFaceJnt;"`;		
+    string $a7 =`button -bgc $bgc2[0] $bgc2[1]  $bgc2[2]  -l "归零  " -h 30 -c "yj_zreotT;"`;			
+    	setParent ..;		
+	rowLayout -numberOfColumns 2 -columnWidth2 120 120 -adjustableColumn 2 -columnAlign  1 "right" -columnAttach 1 "both"   0 -columnAttach 2 "both"  0 ;		
+    string $a8 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "创建控制器" -h 30 -c " yj_createFollicle();"`;		
+    string $a9 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "显示面部蒙皮    " -h 30 -c "yj_switchVis;"`;			
+    	setParent ..;			
+	string $a10 =`separator -w 265 -h 2 -style "single"`;	
+	setParent ..;
+		setParent ..;    
+
+    frameLayout -collapsable 1 -label "面部 BlendShape 表情系统" -labelAlign "bottom" -bgc  $bgc1[0] $bgc1[1] $bgc1[2] -bv 0 -bgs 0 -fn "fixedWidthFont" -mw 5 -mh 5 -ebg 1;	
+        string $a0=`columnLayout -columnAttach "both" 1 -rowSpacing 2 -columnWidth 270 `;
+
+ 	string $a10 =`separator -w 265 -h 2 -style "single"`;	   	
+	$cc1 = `floatSliderGrp -label "目标体间隔:" -field true -minValue 0 -maxValue 30 -fieldMinValue 0 -fieldMaxValue 1000 -value 5 -cw3 80 50 100 -ct3 "both" "both" "both" targetFSG`;
+	rowLayout -numberOfColumns 2 -columnWidth2 120 120 -adjustableColumn 2 -columnAlign  1 "right" -columnAttach 1 "both"   0 -columnAttach 2 "both"  0 ;		
+	$cc2=`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "创建目标体" -w 120 -h 30  -c "yj_createBlendShapeTarget" `;
+	$cc4=`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "检查目标体" -w 120 -h 30  -c "yj_chickFacial"`; 
+	    	setParent..;
+	rowLayout -numberOfColumns 2 -columnWidth2 120 120 -adjustableColumn 2 -columnAlign  1 "right" -columnAttach 1 "both"   0 -columnAttach 2 "both"  0 ;		
+	$cc9=`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "连接表情"   -w 120 -h 30  -command "yj_connectFacial"`;
+	$cc10=`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "清除表情"   -w 120 -h 30  -command "yj_deleteBlendshape"`;
+		setParent ..;	
+	rowLayout -numberOfColumns 2 -columnWidth2 120 120 -adjustableColumn 2 -columnAlign  1 "right" -columnAttach 1 "both"   0 -columnAttach 2 "both"  0 ;		
+	$cc11=`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "镜像表情"   -w 120 -h 30  -command "yj_mirrorBlend"`;
+	$cc12=`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "传递表情"   -w 120 -h 30  -command "yj_chuandiBS"`;
+		setParent ..;	
+			
+	$cc11=`separator -w 268 -h 2 -style "single"`;	
+	setParent ..;
+		setParent ..;	
+		
+    frameLayout -collapsable 1 -label "嘴 绑定" -labelAlign "bottom" -bgc  $bgc1[0] $bgc1[1] $bgc1[2]  -bv 0 -bgs 0 -fn "fixedWidthFont" -mw 5 -mh 5 -ebg 1 ;		
+	string $b0=`columnLayout -columnAttach "both" 2 -rowSpacing 2 -columnWidth 270 `;
+	string $b1 = `separator -w 265 -h 2 -style "single"`;
+	string $b2 =`textFieldGrp -label "前缀名："  -cw2 80 80 -text  "Mouth" PfxTFG`;
+    string $a2 =`textFieldButtonGrp -label "下巴中心点：" -text "" -buttonLabel "      载入     " -cw3 80 100 80 -bc "textFieldButtonGrp -e -text `yjReturnSelectall(\"getDWE_TFBG\")` getCenter_TFBG " getCenter_TFBG`;    	
+    string $a2 =`textFieldButtonGrp -label "嘴定位环线：" -text "" -buttonLabel "      载入     " -cw3 80 100 80 -bc "textFieldButtonGrp -e -text `yjReturnSelectall(\"getDWE_TFBG\")` getCv_TFBG " getCv_TFBG`;    	
+	
+	string $b2 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "选择一条环边，创建骨骼" -h 30 -c "yj_CreateMouthFacialjnt();"`;	
+	string $b3 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "选择模型蒙皮" -h 30 -c "yj_skinFacialJnt;"`;
+	string $c2 =`textFieldButtonGrp -label "初始权重：" -text "" -buttonLabel "添加环边" -cw3 70 120 80   -bc "textFieldButtonGrp -e -text `yjReturnSelectall(\"getDWE_TFBG\")` getDWE_TFBG " getDWE_TFBG`;
+//	string $c4 =`floatSliderButtonGrp -cw4 65 50 80 50 -columnAttach4 "left" "both" "both" "right" -label "过度边权重：" -field 1 -ss .1  -min 0 -max 1  -v 1.0 -pre 3 -buttonLabel "添加环边"  setW_FSBG`;	
+	string $c4 =`floatSliderGrp -cw3 70 50 70 -columnAttach3 "left" "both" "right" -label "过度边权重：" -field 1 -ss .1  -min 0 -max 1  -v 1.0 -pre 3  setW_FSBG`;	
+	string $c6 =`button  -bgc $bgc2[0] $bgc2[1] $bgc2[2] -l "设置权重" -h 30 -c "yj_setFacialSkinWeight" `;		
+	string $b4 =`separator -w 265 -h 2 -style "single"`;	
+	setParent ..;
+		setParent ..;
+
+	window -e -w 280 -h 500  yj_FaicalRigSystemWindow;
+ 	showWindow yj_FaicalRigSystemWindow;                                                                                                                                                                                                                                                                                                             
+}
+yj_FaicalRigSystem;
+
+global proc yj_chickFacial()                                                                                                                                         
+{
+if(`window -exists yj_chickFacialWindow`)
+	deleteUI yj_chickFacialWindow;
+	window  -menuBar true -width 200 -t "yj_chickFacialWindow "  yj_chickFacialWindow;
+    columnLayout -columnAttach "both" 1 -rowSpacing 2 -columnWidth 280 ;        
+	text -al "left" -l "缺少目标体：" ;
+	
+	scrollLayout  -w 130 -h 300 printTarget;
+	text -al "left" -l `yj_checkName` myTargetResult;
+	setParent..;
+	
+	scrollLayout -e -w 130 -h 300 printTarget;	
+	
+	window -e -w 280 -h 300  yj_chickFacialWindow;
+ 	showWindow yj_chickFacialWindow;                                                                                                                                                                                                                                                                                                             
+}	
+//自动根据线创建骨骼点
+
+global proc yj_CreateMouthFacialjnt()
+{
+    $center = "";
+    $pfx =`textFieldGrp -q -text PfxTFG`;
+    $allgroup = ($pfx + "_facialJoint_grp");
+//    创建骨骼
+    SelectEdgeLoopSp;
+    PolySelectConvert 3;
+    $follP = `ls -sl -fl`;
+    $n = size($follP);
+    if (!`objExists "all_facialJoint_grp"`)
+        $allgrp = `group -em  -name ("all_facialJoint_grp")`;
+  
+//创建大组和属性
+    if (!`objExists $allgroup`)
+        {
+        $allgroup = `group -em  -name ($pfx + "_facialJoint_grp")`;
+        addAttr -ln "kaihe"  -at double  -min -1 -max 1 -dv 0  $allgroup ;
+        setAttr -e -keyable true ($allgroup  + ".kaihe");
+        addAttr -ln "shangxia"  -at double  -min -1 -max 1 -dv 0  $allgroup ;
+        setAttr -e-keyable true ( $allgroup  + ".shangxia");
+        parent $allgroup $allgrp;
+        }
+        if (!`objExists "allBase_facialJoint"`)
+        {
+            select -cl;
+            joint  -p 0 0 0 -rad .2 -name "allBase_facialJoint";
+            parent -r "allBase_facialJoint" $allgrp;
+        }
+    int $i; 
+    for ($i = 0;$i<$n;$i++){
+        $fo_p = `pointPosition -w $follP[$i]`;
+        select -cl;
+        joint -p 0 0 0 -rad .2 -name ($pfx + "_" +($i+1)+ "_facialJoint");
+
+/*        addAttr -ln "Up"  -at double  ($pfx  + "_" + ($i+1)+ "_facialJoint");
+        setAttr -e -keyable true  ($pfx  + "_" + ($i+1)+ "_facialJoint"+".Up");    
+        addAttr -ln "Dn"  -at double  ($pfx  + "_" + ($i+1)+ "_facialJoint");
+        setAttr -e -keyable true  ($pfx + "_" + ($i+1)+ "_facialJoint"+".Dn"); 
+        addAttr -ln "L"  -at double  ($pfx + "_" + ($i+1)+ "_facialJoint");
+        setAttr -e -keyable true  ($pfx  + "_" + ($i+1)+ "_facialJoint"+".L");    
+        addAttr -ln "R"  -at double  ($pfx  + "_" + ($i+1)+ "_facialJoint");
+        setAttr -e -keyable true  ($pfx + "_" + ($i+1)+ "_facialJoint"+".R");             
+        addAttr -ln "Weight"  -at double  ($pfx + "_" + ($i+1)+ "_facialJoint");
+        setAttr -e -keyable true  ($pfx + "_" + ($i+1)+ "_facialJoint"+".Weight");
+*/
+        addAttr -ln "vtx_Index"  -dt "string"  ($pfx  + "_" + ($i+1)+ "_facialJoint");
+        setAttr -e -keyable true  ($pfx  + "_" + ($i+1)+ "_facialJoint.vtx_Index");
+        setAttr -type "string"  ($pfx  + "_" + ($i+1)+ "_facialJoint.vtx_Index") $follP[$i];
+        
+        group -name ($pfx + "_" + ($i+1)+ "_facialJoint" +"_grp");
+//        if($center != "")
+//        {
+//            group -em -name ($pfx + "_" + ($i+1)+ "_facialJoint" +"_center_grp");
+//          aimConstraint(follTr[0], aimJnt, mo=True, aim=[0,0,1], u=[0,1,0], wut='vector', wu=[0,1,0])       ///////////////////////////////////////////////////////////////////                                           
+ //       }
+        move  $fo_p[0] $fo_p[1] $fo_p[2] ($pfx + "_" + ($i+1)+ "_facialJoint"+"_grp");
+        parent -r ($pfx + "_" + ($i+1)+ "_facialJoint" +"_grp")  $allgroup;
+        }
+//    yj_setsxzy;
+}
+
+//设置骨骼约束权重属性  未完成。。。。。。。。。。。。    
+global proc yj_SetMouthFacialAttr()
+{
+    $pfx =`textFieldGrp -q -text PfxTFG`;
+    $allgroup = ($pfx + "_facial_grp");
+	$up =`textFieldButtonGrp -q -text getUpfacialJoint_TFBG`;
+	$dn =`textFieldButtonGrp -q -text getDnfacialJoint_TFBG`;
+	$l =`textFieldButtonGrp -q -text getLfacialJoint_TFBG`;
+	$r =`textFieldButtonGrp -q -text getRfacialJoint_TFBG`;
+    
+//创建大组和属性
+    if (!`objExists $allgroup`)
+        {
+        $allgroup = `group -em  -name ($pfx + "_facial_grp")`;
+        addAttr -ln "kaihe"  -at double  -min -1 -max 1 -dv 0  $allgroup ;
+        setAttr -e -keyable true ($allgroup  + ".kaihe");
+        addAttr -ln "shangxia"  -at double  -min -1 -max 1 -dv 0  $allgroup ;
+        setAttr -e-keyable true ( $allgroup  + ".shangxia");
+        }  
+        
+//  创建 locator
+    $fo_p_up  = `xform -q -ws -t $up`;
+    $fo_p_dn  = `xform -q -ws -t $dn`;
+    $fo_p_l  = `xform -q -ws -t  $l`;
+    $fo_p_r  = `xform -q -ws -t  $r`;
+
+    spaceLocator  -name ($pfx + "_up_loc") ;
+    group -name ($pfx + "_up_loc_grp") ($pfx + "_up_loc") ;
+    xform -ws -t $fo_p_up[0] $fo_p_up[1] $fo_p_up[2] ($pfx + "_up_loc_grp");
+    parent -r ($pfx + "_up_loc_grp") $allgroup;
+       
+    spaceLocator  -name ($pfx + "_dn_loc") ;
+    group -name ($pfx + "_dn_loc_grp") ($pfx + "_dn_loc") ;
+    xform -ws -t $fo_p_dn[0] $fo_p_dn[1] $fo_p_dn[2] ($pfx + "_dn_loc_grp");
+    parent -r ($pfx + "_dn_loc_grp") $allgroup;  
+     
+    spaceLocator  -name ($pfx + "_l_loc") ;
+    group -name ($pfx + "_l_loc_grp") ($pfx + "_l_loc") ;
+    xform -ws -t $fo_p_l[0] $fo_p_l[1] $fo_p_l[2]  ($pfx + "_l_loc_grp");
+    parent -r ($pfx + "_l_loc_grp") $allgroup;
+    
+    spaceLocator  -name ($pfx + "_r_loc") ;
+    group -name ($pfx + "_r_loc_grp") ($pfx + "_r_loc") ;
+    xform -ws -t $fo_p_r[0] $fo_p_r[1] $fo_p_r[2]  ($pfx + "_r_loc_grp");
+    parent -r ($pfx + "_r_loc_grp") $allgroup;
+
+    spaceLocator  -name ($pfx + "_mid_loc") ;
+    group -name ($pfx + "_mid_loc_grp") ($pfx + "_mid_loc") ;
+    xform -ws -t (($fo_p_up[0]+$fo_p_dn[0])/2) (($fo_p_up[1]+$fo_p_dn[1])/2) (($fo_p_up[2]+$fo_p_dn[2])/2)  ($pfx + "_mid_loc_grp");
+    parent -r ($pfx + "_mid_loc_grp") $allgroup;
+
+//  创建次级locator  
+    spaceLocator  -name ($pfx + "_upl_loc") ;
+    group -name ($pfx + "_upl_loc_grp") ($pfx + "_upl_loc") ;
+    xform -ws -t  (($fo_p_up[0]+$fo_p_l[0])/2) (($fo_p_up[1]+$fo_p_l[1])/2) (($fo_p_up[2]+$fo_p_l[2])/2) ($pfx + "_upl_loc_grp");
+    parent -r ($pfx + "_upl_loc_grp") $allgroup;  
+    
+    spaceLocator  -name ($pfx + "_upr_loc") ;
+    group -name ($pfx + "_upr_loc_grp") ($pfx + "_upr_loc") ;
+    xform -ws -t  (($fo_p_up[0]+$fo_p_r[0])/2) (($fo_p_up[1]+$fo_p_r[1])/2) (($fo_p_up[2]+$fo_p_r[2])/2) ($pfx + "_upl_loc_grp");
+    parent -r ($pfx + "_upr_loc_grp") $allgroup;   
+        
+    spaceLocator  -name ($pfx + "_dnl_loc") ;
+    group -name ($pfx + "_dnl_loc_grp") ($pfx + "_dnl_loc") ;
+    xform -ws -t  (($fo_p_dn[0]+$fo_p_l[0])/2) (($fo_p_dn[1]+$fo_p_l[1])/2) (($fo_p_dn[2]+$fo_p_l[2])/2)  ($pfx + "_dnl_loc_grp");
+    parent -r ($pfx + "_dnl_loc_grp") $allgroup;     
+
+    spaceLocator  -name ($pfx + "_dnr_loc") ;
+    group -name ($pfx + "_dnr_loc_grp") ($pfx + "_dnr_loc") ;
+    xform -ws -t  (($fo_p_dn[0]+$fo_p_r[0])/2) (($fo_p_dn[1]+$fo_p_r[1])/2) (($fo_p_dn[2]+$fo_p_r[2])/2) ($pfx + "_dnr_loc_grp");
+    parent -r ($pfx + "_dnr_loc_grp") $allgroup;  
+
+    string $alljnt[] = `ls ($pfx + "_*_facialJoint")`;
+    for ($eachjnt in $alljnt)
+    {
+    $constraint = `parentConstraint -mo -weight 1 ($pfx + "_up_loc") ($pfx + "_dn_loc") ($pfx + "_l_loc") ($pfx + "_r_loc") ($eachjnt +"_grp")`;
+    connectAttr -f ($eachjnt +".Up") ($constraint[0]+".mouth_up_locW0");
+    connectAttr -f ($eachjnt +".Dn") ($constraint[0]+".mouth_dn_locW1");
+    connectAttr -f ($eachjnt +".L") ($constraint[0]+".mouth_l_locW2");
+    connectAttr -f ($eachjnt +".R") ($constraint[0]+".mouth_r_locW3");
+    }
+    
+}
+// 返回选择的所有对象（用于TFBG 只返回当前选择）
+global proc string yjReturnSelect(string $TFBG)
+{
+    $sel = `ls -sl`;
+//    string $TFBG ="getDWE_TFBG";
+	string $a =`textFieldButtonGrp -q -text $TFBG`; 
+//	if ($a !="" &&`size($sel)`==0 )
+	if ($a=="")	
+        {yj_setsxzy;
+	string $b =`textFieldButtonGrp -q -text $TFBG`;
+	        return $b; 
+                            
+        }
+   else{
+	if (`size($sel)`==0 )	
+	{
+	        
+//        select $a;
+        return "";
+    }
+    else
+    {
+        if (`size($sel)`== 1)
+        {
+            return $sel[0];
+        }
+        else 
+//            error "请选择唯一一个目标！！！";
+             return "";
+    }
+}
+}
+// 返回选择的所有对象（用于TFBG 在原有上添加）
+global proc string yjReturnSelectall(string $TFBG)
+{
+    //string $TFBG ="getGWE_TFBG1";
+	string $a =`textFieldButtonGrp -q -text $TFBG`;    
+    $sel = `ls -sl -fl`;
+//    int $i = 0;
+    if (`size($sel)`!= 0)
+    {
+        for($i=0;$i<size($sel);++$i)
+        {
+            $a = ($a + $sel[$i]+" ");
+        }
+        return $a ;
+
+    }
+    else 
+    {
+        textFieldButtonGrp -e -text "" $TFBG;
+        return "";
+    }
+}
+
+//yjReturnSelectall("getGWE_TFBG1");
+//    对表情骨骼蒙皮
+global proc yj_skinFacialJnt()
+{
+    $sel = `ls -sl`;    
+    if(size($sel) >0)
+    {
+        $pfx =`textFieldGrp -q -text PfxTFG`;
+        string $allFacialJnt[] = `listRelatives -ad -type "joint" ($pfx+"_facialJoint_grp")`;
+        string $basejnt1[] = {"allBase_facialJoint"};
+        string $FacialJnt[] = stringArrayRemove( $basejnt1,$allFacialJnt);
+        for($each in $allFacialJnt)
+        {
+         select -tgl $each;
+        }
+         select -tgl allBase_facialJoint;        
+        $skinCluster = `newSkinCluster "-toSelectedBones -mi 3 -dr 4 -rui false"`;    
+        skinPercent -transformValue "allBase_facialJoint" 1.0  $skinCluster[0] $sel;
+        for($eachjnt in $FacialJnt)
+        {
+            $vtx_Index = `getAttr ($eachjnt+".vtx_Index")`;
+            skinPercent -transformValue $eachjnt 1.0  $skinCluster[0] $vtx_Index;
+        }
+
+    }
+    else
+        error "请选择至少一个目标！！！";
+}
+
+//    根据距离拷贝权重
+global proc yj_setFacialSkinWeightDistance()
+{
+    string $sel[] = `ls -sl -fl`;
+    string $buffer[];
+    $numTokens = `tokenize $sel[0] "." $buffer`;
+    string $geo = $buffer[0];                    //获取模型名
+    string $sk =`findRelatedSkinCluster($geo)`;  //获取SkinCluster    
+//获取属性
+    string $pfx =`textFieldGrp -q -text PfxTFG`;    
+    float $w =`floatSliderButtonGrp -q -v   setW_FSBG`;	
+    
+    string $baseSelect = `textFieldButtonGrp -q -text getDWE_TFBG`;
+    string $baseSelects[] = stringToStringArray($baseSelect, " ");  
+        string $baseVtx[] =  $baseSelects;        
+    if (`gmatch $baseSelects[0] "*.e*"`)
+    {
+        string $baseVtx[] = `polyListComponentConversion -tv  $baseSelects `;        
+    } 
+    string $baseVtxs[] = `ls -fl $baseVtx`; 
+//    获取选择的点    
+    string $setVtx[] =  $sel;        
+    if (`gmatch $sel[0] "*.e*"`)
+    {
+        string $setVtx[] = `polyListComponentConversion -tv  $sel `;        
+    } 
+    string $setVtxs[] = `ls -fl $setVtx`; 
+
+            
+         int $amount = 0;
+         progressWindow
+         -title "Doing Nothing"
+         -progress $amount
+         -status "Sleeping: 0%"
+         -isInterruptable true;
+//    按距离判断
+        for($eachsetVtx in $setVtxs)
+        {
+
+         if ( `progressWindow -query -isCancelled` ) break;
+         if ( `progressWindow -query -progress` >= 100 ) break;
+
+         
+            string $bv;
+            float $magV1 = 100.0;
+            for($eachbaseVtxs in $baseVtxs)
+            {
+                vector $baseV = `xform -q -r -ws -t $eachbaseVtxs`;
+                vector $setV = `xform -q -r -ws -t $eachsetVtx`;
+                $v = $baseV - $setV;
+                    
+                $magV = mag($v);
+                    if ($magV < $magV1)
+                    {
+                        $magV1 = $magV ;
+                        $bv = $eachbaseVtxs;
+                    }        
+            }
+            string $skinJnt[] = `skinPercent -ignoreBelow 0.4 -query -t $sk $bv`;        
+            skinPercent -tv  $skinJnt[0] $w $sk $eachsetVtx;
+            
+        $amount += (90/(size($eachsetVtx)));
+         progressWindow -edit
+             -progress $amount
+             -status ("Sleeping: "+$amount+"%");
+//                      pause -seconds 1;
+
+         }
+              progressWindow -endProgress;
+
+}
+//    根据环线拷贝权重
+
+global proc yj_setFacialSkinWeight()
+{
+    string $sel[] = `ls -sl -fl`;
+    string $buffer[];
+    $numTokens = `tokenize $sel[0] "." $buffer`;
+    string $geo = $buffer[0];                    //获取模型名
+    string $sk =`findRelatedSkinCluster($geo)`;  //获取SkinCluster    
+//获取属性
+    string $pfx =`textFieldGrp -q -text PfxTFG`;    
+    float $w =`floatSliderButtonGrp -q -v   setW_FSBG`;	
+    
+    string $baseSelect = `textFieldButtonGrp -q -text getDWE_TFBG`;
+    string $baseSelects[] = stringToStringArray($baseSelect, " ");  
+        string $baseVtx[] =  $baseSelects;        
+//    if (`gmatch $baseSelects[0] "*.e*"`)
+        string $baseVtx[] = `polyListComponentConversion -tv  $baseSelects `;       
+    string $baseVtxs[] = stringArrayRemoveDuplicates(`ls -fl $baseVtx`); 
+//获取选择的点    
+    string $setVtx[] =  $sel;        
+//    if (`gmatch $sel[0] "*.e*"`)
+        string $setVtx[] = `polyListComponentConversion -tv  $sel `;       
+    string $setVtxs[] = stringArrayRemoveDuplicates(`ls -fl $setVtx`); 
+
+//    按距离判断
+     int $amount = 0;
+
+     progressWindow
+         -title "Doing Nothing"
+         -progress $amount
+         -status "Sleeping: 0%"
+         -isInterruptable true;
+         
+        for($eachsetVtx in $setVtxs)
+        {
+         if ( `progressWindow -query -isCancelled` ) break;
+         if ( `progressWindow -query -progress` >= 100 ) break;         
+         $amount += (120/size($setVtxs));
+         progressWindow -edit
+             -progress $amount
+             -status ("Sleeping: "+$amount+"%");         
+            string $newV[] = stringToStringArray($eachsetVtx, " ");
+            string $oldV[] = {};
+            int $i = 0;
+            while ($i<100) 
+            {
+                string $newV1[] = `polyListComponentConversion -te  $newV `;        
+                string $newV2[] = `polyListComponentConversion -tv  $newV1 `;        
+                string $newV3[] = `ls -fl $newV2`; 
+                string  $reV[] = stringArrayRemove($oldV, $newV3);
+                string $oldV[] = $newV2;
+                $newV = $newV3;
+                global int $panduan;
+                $panduan = 0;
+                for ($eachreV in $reV)
+                {
+                    if(stringArrayContains($eachreV,$baseVtxs))
+                    {
+                        yj_copySkinWeight($eachreV, $eachsetVtx ,$sk,$sk);
+                        if($w!=1.0)
+                        {
+                            string $skinJnt[] = `skinPercent -ignoreBelow 0.5 -query -t $sk $eachreV`;                       
+                            skinPercent -tv  $skinJnt[0] $w $sk $eachsetVtx;
+                        }
+                        $panduan = 1;
+                        break;  
+                    }
+                }
+                if($panduan==1)
+                {
+                    break;
+                }
+                $i++;
+            }
+         }
+    progressWindow -endProgress;
+}
+//yj_setFacialSkinWeight;
+
+// 1点对N点拷贝权重
+global proc yj_copySkinWeight1ton(string $souceV,string $CopyVs[])
+{
+    string $buffer1[];
+    $numTokens1 = `tokenize $souceV "." $buffer1`;
+    $mesh1 =  $buffer1[0]; 
+    string $sk1 =`findRelatedSkinCluster($mesh1)`;
+    
+    string $buffer2[];
+    $numTokens2 = `tokenize $CopyVs[0] "." $buffer2`;
+    $mesh2 =  $buffer1[0]; 
+    string $sk2 =`findRelatedSkinCluster($mesh2)`;
+    
+    for($eachCopyV in $CopyVs)
+    {
+        yj_copySkinWeight($souceV,$eachCopyV,$sk1,$sk2);
+    }
+}
+
+// 1点对1点拷贝权重
+global proc yj_copySkinWeight1to1(string $souceV,string $CopyV)
+{
+    string $buffer1[];
+    $numTokens1 = `tokenize $souceV "." $buffer1`;
+    $mesh1 =  $buffer1[0]; 
+    string $sk1 =`findRelatedSkinCluster($mesh1)`;
+    
+    string $buffer2[];
+    $numTokens2 = `tokenize $CopyV "." $buffer2`;
+    $mesh2 =  $buffer1[0]; 
+    string $sk2 =`findRelatedSkinCluster($mesh2)`;
+    yj_copySkinWeight($souceV,$CopyV,$sk1,$sk2);
+}
+
+// 拷贝权重
+global proc yj_copySkinWeight(string $souceV, string $CopyV ,string $sk1,string $sk2)
+{
+    string $skinJnt[] = `skinPercent -ignoreBelow 0.01 -query -t $sk1 $souceV`;
+    float $skinValue[] = `skinPercent -ignoreBelow 0.01 -query -v $sk1 $souceV`;
+    string $s = "";
+    int $i;
+    for($i=0;$i<size($skinJnt);$i++)
+    {
+       $s = $s + "-transformValue " +$skinJnt[$i] + " " + $skinValue[$i] +" ";
+    }        
+    $s1 = "skinPercent " + $s + $sk2 + " " + $CopyV +";";
+    eval $s1;
+}
+        
+//获取上下左右骨骼名
+global proc string yj_retrnjntP(int $sxzy)
+{
+    $pfx =`textFieldGrp -q -text PfxTFG`;
+    string $allFacialJnt[] = `listRelatives -ad -type "joint" ($pfx+"_facialJoint_grp")`;    
+    string $up;
+    string $dn;
+    string $l;
+    string $r;
+    float $upV = -1000.0;
+    float $dnV = 10000.0;
+    float $lV = -1000.0;
+    float $rV= 10000.0;
+    for($each in $allFacialJnt)
+    {
+        $p = `xform -q -ws -t $each`;
+        if($p[0]<$rV)
+        {
+            $r = $each;
+            $rV = $p[0];
+        }
+        
+        if($p[0]>$lV)
+        {
+            $l = $each;
+            $lV = $p[0];
+        }
+        if($p[0]<0.01&&$p[0]>-0.01&&$p[1]>$upV)
+        {
+            $up = $each;
+            $upV = $p[1];
+        }        
+        if($p[0]<0.01&&$p[0]>-0.01&&$p[1]<$dnV)
+        {
+            $dn = $each;
+            $dnV = $p[1];
+        }                        
+    }
+    if($sxzy==0)
+    {return $up;}
+    if($sxzy==1)
+    {return $dn;} 
+    if($sxzy==2)
+    {return $l;} 
+    if($sxzy==3)
+    {return $r;}    
+}    
+/*
+//自动设定上下左右骨骼
+global proc yj_setsxzy()
+{
+    if(`textFieldButtonGrp -q -text getUpfacialJoint_TFBG` == "");
+    textFieldButtonGrp -e -text  `yj_retrnjntP(0)`  getUpfacialJoint_TFBG;
+    if(`textFieldButtonGrp -q -text getDnfacialJoint_TFBG` == "");    
+    textFieldButtonGrp -e -text `yj_retrnjntP(1)`  getDnfacialJoint_TFBG;
+    if(`textFieldButtonGrp -q -text getLfacialJoint_TFBG` == "");    
+    textFieldButtonGrp -e -text `yj_retrnjntP(2)`  getLfacialJoint_TFBG;
+    if(`textFieldButtonGrp -q -text getRfacialJoint_TFBG` == "");    
+    textFieldButtonGrp -e -text `yj_retrnjntP(3)`  getRfacialJoint_TFBG;
+    }
+*/
+//匹配曲线的位置
+global proc yj_setCVPostion()
+{
+	string $up =`textFieldButtonGrp -q -text   getUpfacialJoint_TFBG `;
+	string $dn =`textFieldButtonGrp -q -text  getDnfacialJoint_TFBG ` ;
+	string $l =`textFieldButtonGrp -q -text  getLfacialJoint_TFBG ` ;
+	string $r =`textFieldButtonGrp -q -text  getRfacialJoint_TFBG ` ;
+    $pfx =`textFieldGrp -q -text PfxTFG`;
+
+    string $allFacialJnt[] = `listRelatives -ad -type "joint" ($pfx+"_facialJoint_grp")`;
+    $jntNum = size($allFacialJnt);
+    file -import -type "mayaBinary" -rpr "yjRig_temp" -options "v=0"  -pr "Y:/Reference/TD/maya/tool_scripts/yj_mouth_joint_base.mb";
+    select xxx_sk_cv_jnt_grp;
+    searchReplaceNames "xxx" $pfx "hierarchy";
+    select -cl;
+    $upP = `xform -q -ws -t $up`;
+    move -ws $upP[0] $upP[1] $upP[2] up_temp_jnt_grp;
+    $dnP = `xform -q -ws -t $dn`;
+    move -ws $dnP[0] $dnP[1] $dnP[2] dn_temp_jnt_grp;
+    $lP = `xform -q -ws -t $l`;
+    move -ws $lP[0] $lP[1] $lP[2] l_temp_jnt_grp;
+    $rP = `xform -q -ws -t $r`;
+    move -ws $rP[0] $rP[1] $rP[2] r_temp_jnt_grp;
+    delete -ch ($pfx+"_sk_cv");
+    delete up_temp_jnt_grp dn_temp_jnt_grp l_temp_jnt_grp r_temp_jnt_grp;
+    move -ws $upP[0] $upP[1] $upP[2] ($pfx+"_sk_cv.ep[9]");
+    move -ws $dnP[0] $dnP[1] $dnP[2] ($pfx+"_sk_cv.ep[3]");
+    move -ws $lP[0] $lP[1] $lP[2] ($pfx+"_sk_cv.ep[0]");
+    move -ws $rP[0] $rP[1] $rP[2] ($pfx+"_sk_cv.ep[6]");
+    
+    $cv1 = `xform -q -ws -t ($pfx+"_sk_cv.cv[0]")`;
+    move -ws $cv1[0] $cv1[1] $cv1[2] ($pfx+"_offset_sk_cv_lu_jnt_grp");
+    $cv2 = `xform -q -ws -t ($pfx+"_sk_cv.cv[1]")`;
+    move -ws $cv2[0] $cv2[1] $cv2[2] ($pfx+"_offset_sk_cv_l_jnt_grp");
+    $cv3 = `xform -q -ws -t ($pfx+"_sk_cv.cv[2]")`;
+    move -ws $cv3[0] $cv3[1] $cv3[2] ($pfx+"_offset_sk_cv_ld_jnt_grp");
+    $cv4 = `xform -q -ws -t ($pfx+"_sk_cv.cv[3]")`;
+    move -ws $cv4[0] $cv4[1] $cv4[2] ($pfx+"_offset_sk_cv_dl_jnt_grp");
+    $cv5 = `xform -q -ws -t ($pfx+"_sk_cv.cv[4]")`;
+    move -ws $dnP[0] $dnP[1] $dnP[2] ($pfx+"_offset_sk_cv_dn_jnt_grp");
+    $cv6 = `xform -q -ws -t ($pfx+"_sk_cv.cv[5]")`;
+    move -ws $cv6[0] $cv6[1] $cv6[2] ($pfx+"_offset_sk_cv_dr_jnt_grp");
+    $cv7 = `xform -q -ws -t ($pfx+"_sk_cv.cv[6]")`;
+    move -ws $cv7[0] $cv7[1] $cv7[2] ($pfx+"_offset_sk_cv_rd_jnt_grp");
+    $cv8 = `xform -q -ws -t ($pfx+"_sk_cv.cv[7]")`;
+    move -ws $cv8[0] $cv8[1] $cv8[2] ($pfx+"_offset_sk_cv_r_jnt_grp");
+    $cv9 = `xform -q -ws -t ($pfx+"_sk_cv.cv[8]")`;
+    move -ws $cv9[0] $cv9[1] $cv9[2] ($pfx+"_offset_sk_cv_ru_jnt_grp");
+    $cv10 = `xform -q -ws -t ($pfx+"_sk_cv.cv[9]")`;
+    move -ws $cv10[0] $cv10[1] $cv10[2] ($pfx+"_offset_sk_cv_ur_jnt_grp");
+    $cv11 = `xform -q -ws -t ($pfx+"_sk_cv.cv[10]")`;
+    move -ws $upP[0] $upP[1] $upP[2] ($pfx+"_offset_sk_cv_up_jnt_grp");
+    $cv12 = `xform -q -ws -t ($pfx+"_sk_cv.cv[11]")`;
+    move -ws $cv12[0] $cv12[1] $cv12[2] ($pfx+"_offset_sk_cv_ul_jnt_grp");
+//    yj_CreateSkinCurve(($pfx+"_sk_cv"),($pfx+"_facialJoint_grp"))
+}
+
+//    创建一个组下所有骨骼点在曲线上对应的位置
+
+global proc yj_CreateSkinCurve(string $cv,string $jntGrp)
+{
+//    $cv = "Mouth_sk_cv";
+//    $jntGrp = "Mouth_facialJoint_grp";
+    string $allFacialJnt[] = `listRelatives -ad -type "joint" $jntGrp`;
+    $jntNwm = size($allFacialJnt);
+    $i=0;
+//    for($i=0.0;$i<$p;$i++)
+    for ($eachjnt in  $allFacialJnt)
+    {
+         //   $v = (float($i)/float$p);
+        $poc = `pointOnCurve -ch 1 -top 1 $cv`; 
+        $newName = `rename $poc ($cv+"_pointOnCurveInfo_"+$i)`;        
+        spaceLocator -p 0 0 0 -name ($eachjnt+"_loc");
+        setAttr ($eachjnt+"_locShape.localScaleX")  .2;
+        setAttr ($eachjnt+"_locShape.localScaleY")  .2;
+        setAttr ($eachjnt+"_locShape.localScaleZ")  .2;
+        parent  -r ($eachjnt+"_loc") $jntGrp;
+        connectAttr -f ($newName+".position") ($eachjnt+"_loc.translate");
+//        setAttr ($cv+"_pointOnCurveInfo_"+$i+".parameter") (float($i)/float($p));
+        float $v = yj_getPointOnCurve($eachjnt,$newName);
+        setAttr ($newName +".parameter") $v;
+        parent ($eachjnt+"_grp") ($eachjnt+"_loc");
+         $i++;           
+    }
+}
+//yj_CreateSkinCurve("Mouth_sk_cv","Mouth_facialJoint_grp") ;
+
+//    获取 每个点的对应的最近的曲线比例值
+global proc float yj_getPointOnCurve(string $p,string $POC)
+{
+    float $bv0;
+    float $bv1;
+    float $bv2;
+    float $v1 = 100.0;
+    float $va1 = 100.0;
+    float $vb1 = 100.0;
+    //$jnt ="Mouth_1_facialJoint";
+//    $p = "Mouth_1_facialJoint";
+ //   $POC = "xxx_uplip_output_cv_pointOnCurveInfo_1";
+    
+    vector $JNT_P =`xform -q -ws -t $p`;
+    for($i=0.0;$i<=10;$i++)
+    {
+        setAttr ($POC+".parameter") ($i/10.0);
+        vector $PIC_P = `getAttr ($POC+".position")`;
+        $v =  mag($JNT_P -  $PIC_P);
+                        if ($v < $v1)
+                        {
+                            $v1 = $v ;
+                            $bv0 = $i;
+                        }   
+    } //print $bv0;
+    for($i1=0.0;$i1<=10;$i1++)
+    {
+        setAttr ($POC+".parameter") (($bv0/10.0-.05)+($i1/100.0));
+        vector $PIC_P1 = `getAttr ($POC+".position")`;
+        $va =  mag($JNT_P -  $PIC_P1);
+                        if ($va < $va1)
+                        {
+                            $va1 = $va ;
+                            $bv1 = $i1;
+                        }   
+    } //print $bv1;
+//    if($bv1>5)
+//        {$bv0 = $bv0 -1;}      
+    for($i2=0.0;$i2<=10;$i2++)
+    {
+        setAttr ($POC+".parameter") (($bv0/10.0-.05)+($bv1/100.0-.005)+($i2/1000.0));
+        vector $PIC_P2 = `getAttr ($POC+".position")`;
+        $vb =  mag($JNT_P -  $PIC_P2);
+                        if ($vb < $vb1)
+                        {
+                            $vb1 = $vb ;
+                            $bv2 = $i2;
+                        }   
+    }
+//        if($bv2>5)
+//        {$bv1 = $bv1 -1;}
+//    setAttr "Mouth_sk_cv_pointOnCurveInfo_0.parameter" (($bv0/10.0)+($bv1/100.0)+($bv2/1000.0));
+//    return (($bv0/10.000)+($bv1/100.000)+($bv2/1000.000));
+    return (($bv0/10.000)+(($bv1-5)/100.000)+(($bv2-5)/1000.000));
+    
+}
+
+//yj_getPointOnCurve("Mouth_1_facialJoint","xxx_uplip_output_cv_pointOnCurveInfo_1");
+//yj_CreateSkinCurve("xxx_uplip_output_cv","Mouth_up_facialJoint_grp");
+//yj_CreateSkinCurve("xxx_dnlip_output_cv","Mouth_dn_facialJoint_grp");
+
+//镜像对象
+global proc yj_mirror_ltor(int $pfxIndex,int $idex,float $scaleX)
+{
+//$pfxIndex = 1;
+    string $pfx1;
+    string $sel[0] = `ls -sl`;
+    string $sel1 = $sel[0];
+    string $buffer1[];
+    $numTokens1 = `tokenize $sel1 "_" $buffer1`;
+    if($pfxIndex == 1)
+    {
+        $pfx1 = ("*_"+$buffer1[$numTokens1-1]);
+    }
+    if($pfxIndex == 2)
+    {
+        $pfx1 = ("*_"+$buffer1[$numTokens1-2]+"_"+$buffer1[$numTokens1-1]);
+    }
+    $alljnt = `ls 	-type "transform" $pfx1`;
+	string $each;
+	for($each in $alljnt)
+	{
+	string $buffer[];
+	int $numTokens = `tokenize $each  "_" $buffer`;
+
+		if($buffer[$idex]=="l")
+		{
+			$pos = `xform -q -t $each`;
+			$ro = `xform -q -ro $each`;
+			string $mirrEach = `substitute "_l_" $each  "_r_"`;
+			xform -t ($pos[0]*$scaleX) $pos[1] $pos[2] $mirrEach ;
+			xform -ro $ro[0] ($ro[1]*$scaleX) ($ro[2]*$scaleX) $mirrEach ;
+		}
+		if($buffer[$idex]!="r"&&$buffer[$idex]!="l"&&$buffer[$idex]=="m")
+		{
+			setAttr ($each+".tx") 0;
+		}
+	}
+}
+
+
+//yj_mirror_ltor(1,1,1.0)
+global proc yj_mirror_rtol(int $pfxIndex,int $idex,float $scaleX)
+{
+//$pfxIndex = 1;
+    string $pfx1;
+    $sel = `ls -sl`;
+    $sel1 = $sel[0];
+    string $buffer1[];
+    int $numTokens1 = `tokenize $sel1  "_" $buffer1`;
+    if($pfxIndex == 1)
+    {
+        $pfx1 = ("*_"+$buffer1[$numTokens1-1]);
+    }
+    if($pfxIndex == 2)
+    {
+        $pfx1 = ("*_"+$buffer1[$numTokens1-2]+"_"+$buffer1[$numTokens1-1]);
+    }
+    $alljnt = `ls 	-type "transform" $pfx1`;
+//	string $each;
+	for($each in $alljnt)
+	{
+	string $buffer[];
+	$numTokens = `tokenize $each  "_" $buffer`;
+
+		if($buffer[$idex]=="r")
+		{
+			$pos = `xform -q -t $each`;
+			$ro = `xform -q -ro $each`;
+			string $mirrEach = `substitute "_r_" $each  "_l_"`;
+			xform -t ($pos[0]*$scaleX) $pos[1] $pos[2] $mirrEach ;
+			xform -ro $ro[0] ($ro[1]*$scaleX) ($ro[2]*$scaleX) $mirrEach ;
+		}
+		if($buffer[$idex]!="r"&&$buffer[$idex]!="l"&&$buffer[$idex]=="m")
+		{
+			setAttr ($each+".tx") 0;
+		}
+	}
+}
+
+//归零
+
+global proc yj_zreotT()
+{
+    string $sel[] = `ls -sl`;
+    string $buffer[];
+    int $numTokens = `tokenize $sel[0]  "_" $buffer`;    
+    string $pfx1 = ("*_"+$buffer[$numTokens-1]);
+   string $all[] = `ls 	-type "transform" $pfx1`;
+    string $each;
+    for ($each in $all)
+    {
+        if(!`getAttr -lock ($each+".tx")`)
+               setAttr  ($each+".tx") 0;
+        if(!`getAttr -lock ($each+".ty")`)
+               setAttr  ($each+".ty") 0;      
+        if(!`getAttr -lock ($each+".tz")`)
+               setAttr  ($each+".tz") 0;    
+        if(!`getAttr -lock ($each+".rx")`)
+               setAttr  ($each+".rx") 0;
+        if(!`getAttr -lock ($each+".ry")`)
+               setAttr  ($each+".ry") 0;      
+        if(!`getAttr -lock ($each+".rz")`)
+               setAttr  ($each+".rz") 0;   
+        if(!`getAttr -lock ($each+".sx")`)
+               setAttr  ($each+".sx") 1;
+        if(!`getAttr -lock ($each+".sy")`)
+               setAttr  ($each+".sy") 1;      
+        if(!`getAttr -lock ($each+".sz")`)
+               setAttr  ($each+".sz") 1;                                                                        
+    }        
+}
+
+global proc yj_createBsJnt(string $obj,string $pfx)
+{
+//string $obj = "pSphere1";
+//string $pfx    = "pSphere1";
+addAttr -ln "plusX" -nn "+X" -at double  -min 0 -max 1000 -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".plusX");
+addAttr -ln "plusY" -nn "+Y" -at double  -min 0 -max 1000 -dv 0  $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".plusY");
+addAttr -ln "plusZ" -nn "+Z" -at double  -min 0 -max 1000 -dv 0  $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".plusZ");
+
+addAttr -ln "minusX" -nn "-X" -at double  -min -1000 -max 0 -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".minusX");
+addAttr -ln "minusY" -nn "-Y" -at double  -min -1000 -max 0 -dv 0  $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".minusY");
+addAttr -ln "minusZ" -nn "-Z" -at double -min -1000 -max 0 -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".minusZ");
+
+addAttr -ln "bs_output_plusX" -nn "bs output +X" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".bs_output_plusX");
+addAttr -ln "bs_output_minusX" -nn "bs output -X" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".bs_output_minusX");
+
+addAttr -ln "bs_output_plusY" -nn "bs output +Y" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".bs_output_plusY");
+addAttr -ln "bs_output_minusY" -nn "bs output -Y" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".bs_output_minusY");
+
+addAttr -ln "bs_output_plusZ" -nn "bs output +Z" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".bs_output_plusZ");
+addAttr -ln "bs_output_minusZ" -nn "bs output -Z" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".bs_output_minusZ");
+
+addAttr -ln "output_X" -nn "output X" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".output_X");
+addAttr -ln "output_Y" -nn "output Y" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".output_Y");
+addAttr -ln "output_Z" -nn "output Z" -at double  -dv 0 $obj;
+setAttr -e  -keyable false -channelBox true ($obj +".output_Z");
+
+string $bpm = `createNode  multiplyDivide -name ($pfx+ "_bs_plus_multiplyDivide")`;
+string $bmm = `createNode  multiplyDivide -name ($pfx+ "_bs_minus_multiplyDivide")`;
+//string $bm = `createNode  multiplyDivide -name ($pfx+ "_bili_multiplyDivide")`;
+
+string $bpc = `createNode  clamp -name ($pfx+ "_bs_plus_clamp")`;
+string $bmc = `createNode  clamp -name ($pfx+ "_bs_minus_clamp")`;
+
+string $bpp = `createNode  plusMinusAverage -name ($pfx+ "_bs_plus_plusMinusAverage")`;
+string $bmp = `createNode  plusMinusAverage -name ($pfx+ "_bs_mins_plusMinusAverage")`;   
+string $xp = `createNode  plusMinusAverage -name ($pfx+ "_x_plusMinusAverage")`;
+string $yp = `createNode  plusMinusAverage -name ($pfx+ "_y_plusMinusAverage")`;
+string $zp = `createNode  plusMinusAverage -name ($pfx+ "_z_plusMinusAverage")`;
+string $pp = `createNode  plusMinusAverage -name ($pfx+ "_plus_plusMinusAverage")`;
+string $mp = `createNode  plusMinusAverage -name ($pfx+ "_minus_plusMinusAverage")`;
+
+string $pxc =`createNode  condition -name ($pfx+"_plusX_condition")`;
+string $pyc =`createNode  condition -name ($pfx+"_plusY_condition")`;
+string $pzc =`createNode  condition -name ($pfx+"_plusZ_condition")`;
+string $mxc =`createNode  condition -name ($pfx+"_minusX_condition")`;
+string $myc =`createNode  condition -name ($pfx+"_minusY_condition")`;
+string $mzc =`createNode  condition -name ($pfx+"_minusZ_condition")`;
+
+
+//connectAttr ($obj+".plusX") ($bpm+".input1X");
+//connectAttr ($obj+".plusY") ($bpm+".input1Y");
+//connectAttr ($obj+".plusZ") ($bpm+".input1Z");
+connectAttr ($obj+".translate") ($bpm+".input1");
+
+//connectAttr ($obj+".minusX") ($bmm+".input1X");
+//connectAttr ($obj+".minusY") ($bmm+".input1Y");
+//connectAttr ($obj+".minusZ") ($bmm+".input1Z");
+connectAttr ($obj+".translate") ($bmm+".input1");
+
+connectAttr ($obj+".plusX") ($pxc+".secondTerm");
+connectAttr ($obj+".plusY") ($pyc+".secondTerm");
+connectAttr ($obj+".plusZ") ($pzc+".secondTerm");
+connectAttr ($obj+".translateX") ($pxc+".firstTerm");
+connectAttr ($obj+".translateY") ($pyc+".firstTerm");
+connectAttr ($obj+".translateZ") ($pzc+".firstTerm");
+
+connectAttr ($obj+".minusX") ($mxc+".secondTerm");
+connectAttr ($obj+".minusY") ($myc+".secondTerm");
+connectAttr ($obj+".minusZ") ($mzc+".secondTerm");
+connectAttr ($obj+".translateX") ($mxc+".firstTerm");
+connectAttr ($obj+".translateY") ($myc+".firstTerm");
+connectAttr ($obj+".translateZ") ($mzc+".firstTerm");
+
+connectAttr ($obj+".plusX") ($pp+".input3D[1].input3Dx");
+connectAttr ($obj+".plusY") ($pp+".input3D[1].input3Dy");
+connectAttr ($obj+".plusZ") ($pp+".input3D[1].input3Dz");
+connectAttr ($obj+".minusX") ($mp+".input3D[1].input3Dx");
+connectAttr ($obj+".minusY") ($mp+".input3D[1].input3Dy");
+connectAttr ($obj+".minusZ") ($mp+".input3D[1].input3Dz");
+
+
+connectAttr ($obj+".minusX") ($bmp+".input3D[0].input3Dx");
+connectAttr ($obj+".minusY") ($bmp+".input3D[0].input3Dy");
+connectAttr ($obj+".minusZ") ($bmp+".input3D[0].input3Dz");
+setAttr ($bmp+".input3D[1].input3Dx") 0.001;
+setAttr ($bmp+".input3D[1].input3Dy") 0.001;
+setAttr ($bmp+".input3D[1].input3Dz") 0.001;
+
+connectAttr ($obj+".plusX") ($bpp+".input3D[0].input3Dx");
+connectAttr ($obj+".plusY") ($bpp+".input3D[0].input3Dy");
+connectAttr ($obj+".plusZ") ($bpp+".input3D[0].input3Dz");
+setAttr ($bpp+".input3D[1].input3Dx") 0.001;
+setAttr ($bpp+".input3D[1].input3Dy") 0.001;
+setAttr ($bpp+".input3D[1].input3Dz") 0.001;
+
+connectAttr ($bpp+".output3Dx") ($bpm+".input2X");
+connectAttr ($bpp+".output3Dy") ($bpm+".input2Y");
+connectAttr ($bpp+".output3Dz") ($bpm+".input2Z");
+connectAttr ($bmp+".output3Dx") ($bmm+".input2X");
+connectAttr ($bmp+".output3Dy") ($bmm+".input2Y");
+connectAttr ($bmp+".output3Dz") ($bmm+".input2Z");
+//////////////////////////////////////////////////////////////////////////////
+connectAttr ($obj+".translateX") ($pp+".input3D[0].input3Dx");
+connectAttr ($obj+".translateY") ($pp+".input3D[0].input3Dy");
+connectAttr ($obj+".translateZ") ($pp+".input3D[0].input3Dz");
+connectAttr ($obj+".translateX") ($mp+".input3D[0].input3Dx");
+connectAttr ($obj+".translateY") ($mp+".input3D[0].input3Dy");
+connectAttr ($obj+".translateZ") ($mp+".input3D[0].input3Dz");
+
+//////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+connectAttr ($bpm+".outputX") ($bpc+".inputR");
+connectAttr ($bpm+".outputY") ($bpc+".inputG");
+connectAttr ($bpm+".outputZ") ($bpc+".inputB");
+setAttr ($bpm+".operation") 2;
+
+connectAttr ($bmm+".outputX") ($bmc+".inputR");
+connectAttr ($bmm+".outputY") ($bmc+".inputG");
+connectAttr ($bmm+".outputZ") ($bmc+".inputB");
+setAttr ($bmm+".operation") 2;
+
+connectAttr ($bpc+".outputR") ($obj+".bs_output_plusX");
+connectAttr ($bpc+".outputG") ($obj+".bs_output_plusY");
+connectAttr ($bpc+".outputB") ($obj+".bs_output_plusZ");
+connectAttr ($bmc+".outputR") ($obj+".bs_output_minusX");
+connectAttr ($bmc+".outputG") ($obj+".bs_output_minusY");
+connectAttr ($bmc+".outputB") ($obj+".bs_output_minusZ");
+setAttr ($bmc+".maxR") 1;
+setAttr ($bmc+".maxG") 1;
+setAttr ($bmc+".maxB") 1;
+setAttr ($bpc+".maxR") 1;
+setAttr ($bpc+".maxG") 1;
+setAttr ($bpc+".maxB") 1;
+
+
+connectAttr ($xp+".output3Dx") ($obj+".output_X");
+setAttr ($xp+".operation") 1;
+connectAttr ($yp+".output3Dy") ($obj+".output_Y");
+setAttr ($yp+".operation") 1;
+connectAttr ($zp+".output3Dz") ($obj+".output_Z");
+setAttr ($zp+".operation") 1;
+
+connectAttr  ($pp+".output3Dx") ($pxc+".colorIfTrueR");
+connectAttr  ($pp+".output3Dy") ($pyc+".colorIfTrueG");
+connectAttr  ($pp+".output3Dz") ($pzc+".colorIfTrueB");
+setAttr ($pp+".operation") 2;
+connectAttr  ($mp+".output3Dx") ($mxc+".colorIfTrueR");
+connectAttr  ($mp+".output3Dy") ($myc+".colorIfTrueG");
+connectAttr  ($mp+".output3Dz") ($mzc+".colorIfTrueB");
+setAttr ($mp+".operation") 2;
+
+connectAttr ($pxc+".outColorR") ($xp+".input3D[0].input3Dx");
+setAttr ($pxc+".operation") 2;
+setAttr ($pxc+".colorIfFalseR") 0;
+
+connectAttr ($pyc+".outColorG") ($yp+".input3D[0].input3Dy");
+setAttr ($pyc+".operation") 2;
+setAttr ($pyc+".colorIfFalseG") 0;
+
+connectAttr ($pzc+".outColorB") ($zp+".input3D[0].input3Dz");
+setAttr ($pzc+".operation") 2;
+setAttr ($pzc+".colorIfFalseB") 0;
+
+connectAttr ($mxc+".outColorR") ($xp+".input3D[1].input3Dx");
+setAttr ($mxc+".operation") 4;
+setAttr ($mxc+".colorIfFalseR") 0;
+
+connectAttr ($myc+".outColorG") ($yp+".input3D[1].input3Dy");
+setAttr ($myc+".operation") 4;
+setAttr ($myc+".colorIfFalseG") 0;
+
+connectAttr ($mzc+".outColorB") ($zp+".input3D[1].input3Dz");
+setAttr ($mzc+".operation") 4;
+setAttr ($mzc+".colorIfFalseB") 0;
+
+}
+
+global proc yj_createFollicle()
+{
+    //string $obj = "Danma_l_nose_faceJnt";
+//    string $headbase = "head_geo";
+//    string $mesh = "control_geo";
+    string $selobj[] = `ls -sl`;
+    string $headbase = $selobj[0];
+    string $mesh = "control_geo"; 
+    string $controlGeo[]  = `duplicate  -name $mesh $headbase`;
+    
+//    string $bsGeo[]  = `duplicate  -name "blendShape_geo" $headbase`;
+//    blendShape -name "facial_bs" "head_g" $bsGeo[0];
+//    setAttr "facial_bs.head_g" 1;
+//    blendShape -name "ctrl_bs" $bsGeo[0] $mesh;
+//    setAttr "ctrl_bs.blendShape_geo" 1;
+    //创建次级控制器大组
+    if(!`objExists "SecCtrl_face_grp"`){
+        group -em -name  "SecCtrl_face_grp";
+        addAttr -ln "global_scale"  -at double  -dv 1 SecCtrl_face_grp;
+        setAttr -e-keyable true SecCtrl_face_grp.global_scale;
+        addAttr -ln "color"  -at long  -dv 17 SecCtrl_face_grp;
+        setAttr -e-keyable true SecCtrl_face_grp.color;
+        addAttr -ln "reverse"  -at double  -dv 0.0 SecCtrl_face_grp;
+        setAttr -e-keyable true SecCtrl_face_grp.reverse;        
+        }
+    //创建旋转约束loc
+    if(!`objExists "SecCtrl_Orient_loc"`)
+    {
+        spaceLocator -p 0 0 0 -name  "SecCtrl_Orient_loc";
+        parent "SecCtrl_Orient_loc" "SecCtrl_face_grp";
+        addAttr -ln "secFaceOrient" -at "enum" -en "Foll:Loc" "SecCtrl_Orient_loc";
+        setAttr -e "SecCtrl_Orient_loc.secFaceOrient"  -k 1;
+        setAttr "SecCtrl_Orient_loc.secFaceOrient" 1;
+    }
+    $sx = `getAttr "*_face_jnt_curve.scaleX"`;
+    $sy = `getAttr "*_face_jnt_curve.scaleY"`;
+    $sz = `getAttr "*_face_jnt_curve.scaleZ"`;
+    
+    string $allloc[] = `listRelatives -ad -type "joint" ("*_face_jnt_grp")`;
+    for($loc in $allloc)
+    {
+//         string $loc = "Danma_l_nose_faceJnt";
+//         string $mesh = "control_geo";
+        // 创建closest节点并链接属性
+        string $closeNodeName = `createNode "closestPointOnMesh" -n "testClosetstNode"`;
+        connectAttr ($mesh+".worldMatrix")  ($closeNodeName+".inputMatrix");
+        connectAttr ($mesh+".worldMesh")  ($closeNodeName+".inMesh");
+        $p = `xform  -q  -t  -ws $loc `;
+        setAttr ($closeNodeName+".inPositionX") $p[0];
+        setAttr ($closeNodeName+".inPositionY") $p[1];
+        setAttr ($closeNodeName+".inPositionZ") $p[2];    
+        $u = `getAttr ($closeNodeName+".parameterU")`;
+        $v = `getAttr ($closeNodeName+".parameterV")`;
+        // 创建毛囊设置其属性
+        $follName = `createNode  "follicle"  -n ($loc+"_FollicleShape")`;
+        setAttr ($follName+".v")  0;
+        setAttr ($follName+".parameterU")  $u;
+        setAttr ($follName+".parameterV")  $v;
+        // 获取添加毛囊模型的shape节点
+        $selMesh =`listRelatives -s  $mesh`;
+        // 连接毛囊和shape节点
+        connectAttr ($selMesh[0]+".outMesh")  ($follName+".inputMesh");
+        connectAttr ($selMesh[0]+".worldMatrix")  ($follName+".inputWorldMatrix");
+        $follP =  `listRelatives -p $follName`;
+        connectAttr($follName+".outRotate")  ($follP[0]+".rotate");
+        connectAttr($follName+".outTranslate") ($follP[0]+".translate");
+        // 创建毛囊上的次级控制器层级
+        $follpoint = ` xform -q -ws -t $follP[0]`;
+        $offsetName = ` createNode "transform"  -n ($loc+"_offset_grp")`;
+        setAttr ($offsetName+".t")  $follpoint[0]  $follpoint[1]  $follpoint[2];
+        parent $offsetName  $follP[0];
+        setAttr ($offsetName+".t")  -l 1;
+        setAttr ($offsetName+".r")  -l 1;
+        $constrainName = ` createNode  "transform"  -n ($loc+"_constrain_grp")`;
+        $rg = ` createNode  "transform"  -n ($loc+"_reverse_grp")`;
+        $rmd = ` createNode  "multiplyDivide"  -n ($loc+"_reverse_multiplyDivide")`; 
+        connectAttr SecCtrl_face_grp.reverse ($rmd+".input2X"); 
+        connectAttr SecCtrl_face_grp.reverse ($rmd+".input2Y"); 
+        connectAttr SecCtrl_face_grp.reverse ($rmd+".input2Z"); 
+        
+//        setAttr ($rmd+".input2X") -1;    
+//        setAttr ($rmd+".input2Y") -1;
+//        setAttr ($rmd+".input2Z") -1;   
+        //$ctrlName = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r 1 -d 3 -ut 0 -tol 0.00393701 -s 8 -ch 1 -name ($loc+"_ctrl")`;
+        $ctrlName = ($loc+"_ctrl");
+ //           $ctrlName = ("ctrl");
+    
+        curve -d 1 -p 0 0.9980266256 0 -p -0.3819278231 0.9220568387 0 -p -0.7057116132 0.7057116132 0 -p -0.9220568387 0.3819278231 0 -p -0.9980266256 0 0 -p -0.9220568387 -0.3819278231 0 -p -0.7057116132 -0.7057116132 0 
+           -p -0.3819278231 -0.9220568387 0 -p 0 -0.9980266256 0 -p 0.3819278231 -0.9220568387 0 -p 0.7057116132 -0.7057116132 0 -p 0.9220568387 -0.3819278231 0 -p 0.9980266256 0 0 -p 0.9220568387 0.3819278231 0 
+           -p 0.7057116132 0.7057116132 0 -p 0.3819278231 0.9220568387 0 -p 0 0.9980266256 0 -p 0 0.9220568387 0.3819278231 -p 0 0.7057116132 0.7057116132 -p 0 0.3819278231 0.9220568387 -p 0 0 0.9980266256 -p 0 -0.3819278231 0.9220568387 
+           -p 0 -0.7057116132 0.7057116132 -p 0 -0.9220568387 0.3819278231 -p 0 -0.9980266256 0 -p 0 -0.9220568387 -0.3819278231 -p 0 -0.7057116132 -0.7057116132 -p 0 -0.3819278231 -0.9220568387 -p 0 0 -0.9980266256 -p 0 0.3819278231 -0.9220568387 
+           -p 0 0.7057116132 -0.7057116132 -p 0 0.9220568387 -0.3819278231 -p 0 0.9980266256 0 -p -0.3819278231 0.9220568387 0 -p -0.7057116132 0.7057116132 0 -p -0.9220568387 0.3819278231 0 -p -0.9980266256 0 0 -p -0.9220568387 0 0.3819278231 
+           -p -0.7057116132 0 0.7057116132 -p -0.3819278231 0 0.9220568387 -p 0 0 0.9980266256 -p 0.3819278231 0 0.9220568387 -p 0.7057116132 0 0.7057116132 -p 0.9220568387 0 0.3819278231 -p 0.9980266256 0 0 -p 0.9220568387 0 -0.3819278231 
+           -p 0.7057116132 0 -0.7057116132 -p 0.3819278231 0 -0.9220568387 -p 0 0 -0.9980266256 -p -0.3819278231 0 -0.9220568387 -p -0.7057116132 0 -0.7057116132 -p -0.9220568387 0 -0.3819278231 -p -0.9980266256 0 0 
+           -k 0 -k 1 -k 2 -k 3 -k 4 -k 5 -k 6 -k 7 -k 8 -k 9 -k 10 -k 11 -k 12 -k 13 -k 14 -k 15 -k 16 -k 17 -k 18 -k 19 -k 20 -k 21 -k 22 -k 23 -k 24 -k 25 -k 26 -k 27 -k 28 -k 29 -k 30 -k 31 -k 32 -k 33 -k 34 -k 35 -k 36 -k 37 -k 38 -k 39 
+           -k 40 -k 41 -k 42 -k 43 -k 44 -k 45 -k 46 -k 47 -k 48 -k 49 -k 50 -k 51 -k 52 -name $ctrlName;
+           scale .2 .2 .2 $ctrlName;
+           makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 -pn 1 $ctrlName;
+        yj_createBsJnt( $ctrlName, $ctrlName);
+        string $shape[] =  `listRelatives -s $ctrlName `;
+        setAttr ($shape[0]+".overrideEnabled")  1;
+//        setAttr ($shape+".overrideColor")  17;
+        connectAttr "SecCtrl_face_grp.color" ($shape[0]+".overrideColor") ;
+        parent  $ctrlName  $rg;
+        parent $rg  $constrainName;
+        parent $constrainName $offsetName;
+        connectAttr  ($ctrlName+".t") ($rmd+".input1");
+        connectAttr  ($rmd+".output") ($rg+".t") ;
+
+    
+    //    joint -n ($loc+"_jnt");
+    //    parent $constrainName  $offsetName;
+        setAttr ($constrainName+".t")  0  0  0 ;
+        setAttr ($constrainName+".r")  0  0  0 ;
+        parent $follP[0]  "SecCtrl_face_grp";
+        // 创建旋转约束
+        $const =  `orientConstraint -mo "SecCtrl_Orient_loc"  $offsetName  $constrainName`  ;
+        connectAttr "SecCtrl_Orient_loc.secFaceOrient"  ($const[0]+".SecCtrl_Orient_locW0");
+        $reverseN = ` createNode "reverse"  -n  ($loc+"_ReverseNode")`;
+        connectAttr ("SecCtrl_Orient_loc.secFaceOrient" ) ($reverseN+".inputX");
+        connectAttr ($reverseN+".outputX") ( $const[0]+"."+$offsetName+"W1");
+        // 删除closest节点
+        delete $closeNodeName;
+        select -r "SecCtrl_face_grp" ;
+        
+    // 解决双倍位移问题
+//    connectAttr ($ctrlName+".t")  ($loc+".t");
+    connectAttr ($ctrlName+".output_X")  ($loc+".tx");
+    connectAttr ($ctrlName+".output_Y")  ($loc+".ty");
+    connectAttr ($ctrlName+".output_Z")  ($loc+".tz");
+    
+    connectAttr "SecCtrl_face_grp.global_scale" ($follP[0]+".scaleX") ;
+    connectAttr "SecCtrl_face_grp.global_scale" ($follP[0]+".scaleY") ;
+    connectAttr "SecCtrl_face_grp.global_scale" ($follP[0]+".scaleZ") ;
+    setAttr ($offsetName+".scaleX") $sx;
+    setAttr ($offsetName+".scaleY") $sy;
+    setAttr ($offsetName+".scaleZ") $sz;
+    
+    // 查询头部控制器 如果存在则将次级控制轴向和显示属性连接到头部控制器
+    
+    // 连接次级控制的缩放到globalscale组-----------
+    
+    }
+}
+
+
+global proc yj_chuandiBS()
+{
+    $sel = `ls -sl`;
+    $bs = `blendShape -tc 0 $sel[0] $sel[1]`;
+    setAttr  ($bs[0] +".head_bs") 1;
+    select $sel[1];
+    DeleteHistory;
+}
+
+
+
+global proc yj_mirrFaceJnt_ltor_pos()
+{
+	$grp = "*_face_jnt_curve";
+	$alljnt = `listRelatives -c -ad -type "transform" $grp`;
+	string $each;
+	for($each in $alljnt)
+	{
+	string $buffer[];
+	$numTokens = `tokenize $each  "_" $buffer`;
+
+		if($buffer[1]=="l")
+		{
+			$pos = `xform -q -t $each`;
+			$ro = `xform -q -ro $each`;
+			string $mirrEach = `substitute "_l_" $each  "_r_"`;
+			xform -t ($pos[0]*-1) $pos[1] $pos[2] $mirrEach ;
+			xform -ro $ro[0] ($ro[1]*-1) ($ro[2]*-1) $mirrEach ;
+
+		}
+		if($buffer[1]!="r"&&$buffer[1]!="l")
+		{
+			setAttr ($each+".tx") 0;
+		}
+	}
+}
+
+global proc yj_mirrFaceJnt_rtol_pos()
+{
+	$grp = "*_face_jnt_curve";
+	$alljnt = `listRelatives -c -ad -type "transform" $grp`;
+	string $each;
+	for($each in $alljnt)
+	{
+	string $buffer[];
+	$numTokens = `tokenize $each  "_" $buffer`;
+
+		if($buffer[1]=="r")
+		{
+			$pos = `xform -q -t $each`;
+			$ro = `xform -q -ro $each`;
+			string $mirrEach = `substitute "_r_" $each  "_l_"`;
+			xform -t ($pos[0]*-1) $pos[1] $pos[2] $mirrEach ;
+			xform -ro $ro[0] ($ro[1]*-1) ($ro[2]*-1) $mirrEach ;
+
+		}
+		if($buffer[1]!="r"&&$buffer[1]!="l")
+		{
+			setAttr ($each+".tx") 0;
+		}
+	}
+}
+
+global proc yj_skinFaceJnt()
+{
+    $sel = `ls -sl`;
+    $alljnt = `listRelatives -c -ad -type "joint" "*_face_jnt_curve"`;
+        for($eachjnt in $alljnt)
+        {
+            select -tgl $eachjnt;
+        }
+    skinCluster -toSelectedBones -mi 3 -dr 4 -rui false;
+}
+
+source "yj_FacialRig.mel";
+source "yj_faceJntRig.mel";
+
+
+global proc yj_connectFacial()
+{
+	if (!`objExists facial_blendShape`)
+	{
+		string $all_blendShape_target[]={"r_outBrow_up","r_midBrow_up","r_inBrow_up","l_inBrow_up","l_midBrow_up","l_outBrow_up","r_outBrow_dn","r_midBrow_dn","r_inBrow_dn","l_inBrow_dn",
+				"l_midBrow_dn","l_outBrow_dn","r_upEyeLid_up","r_upEyeLid_100","l_upEyeLid_100","l_upEyeLid_up","r_lowEyeLid_dn","r_lowEyeLid_100","l_lowEyeLid_100","l_lowEyeLid_dn",
+				"nose_r","nose_up","nose_dn","nose_l","r_cheek_out","r_cheek_in","l_cheek_in","l_cheek_out","r_up_sneer_out",
+				"r_up_sneer_in","r_mouth_out","r_mouth_up","l_mouth_up","l_mouth_out","l_up_sneer_in","l_up_sneer_out","r_dn_sneer_out","r_dn_sneer_in","r_mouth_in","r_mouth_dn",
+				"l_mouth_dn","l_mouth_in","l_dn_sneer_in","l_dn_sneer_out","r_sneer","l_sneer","upLip_in","upLip_out","upLip_down","upLip_up",
+				"lowLip_in","lowLip_out","lowLip_up","lowLip_down","a_mouth","e_mouth","ai_mouth","aw_mouth","o_mouth","u_mouth","fv_mouth","dnl_mouth","mbp_mouth","th_mouth","eye_blendshape",
+				"add_blendshape","head_blendShape_grp"};
+		select -cl  ;
+
+		for ($each in $all_blendShape_target)
+		{
+			select -tgl $each;
+		}
+		blendShape -n "facial_blendShape";
+		select -cl  ;
+		blendShape -e  -ib -t "head_blendShape_grp" 13   r_upEyeLid_50 0.5 facial_blendShape;
+
+		blendShape -e  -ib -t "head_blendShape_grp" 14   l_upEyeLid_50 0.5 facial_blendShape;
+
+		blendShape -e  -ib -t "head_blendShape_grp" 17   r_lowEyeLid_50 0.5 facial_blendShape;
+
+		blendShape -e  -ib -t "head_blendShape_grp" 18   l_lowEyeLid_50 0.5 facial_blendShape;
+
+	}
+	else
+		error "facial_blendShape 已经存在";
+
+
+select head_blendShape_grp;
+select -tgl head_base;
+blendShape -n "facial_bs";
+setAttr "facial_bs.head_blendShape_grp" 1;
+
+setAttr "head_base.visibility" 1;
+setAttr "head_face_jnt_geo_grp.visibility" 0;
+
+select head_base|head_geo;
+select -tgl control_geo;
+blendShape -n "control_bs";
+setAttr "control_bs.head_geo" 1;
+blendShape -e  -t head_blendShape_grp|head_bs 67 head_face_jnt_geo_grp|head_g 1 facial_blendShape;
+setAttr "facial_blendShape.head_g" 1;
+
+
+
+$pfx = "Danma"; 
+
+
+setAttr  ($pfx+"_l_in_brow_faceJnt_ctrl.plusY") 1;
+//setAttr  ($pfx+"_l_in_brow_faceJnt_ctrl.minusX") -1;
+setAttr  ($pfx+"_l_in_brow_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_l_in_brow_faceJnt_ctrl.bs_output_plusY") facial_blendShape.l_inBrow_up;
+connectAttr -f ($pfx+"_l_in_brow_faceJnt_ctrl.bs_output_minusY") facial_blendShape.l_inBrow_dn;
+//connectAttr -f ($pfx+"_l_in_brow_faceJnt_ctrl.bs_output_minusX") facial_blendShape.l_inBrow_in;
+
+setAttr  ($pfx+"_l_mid_brow_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_l_mid_brow_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_l_mid_brow_faceJnt_ctrl.bs_output_plusY") facial_blendShape.l_midBrow_up;
+connectAttr -f ($pfx+"_l_mid_brow_faceJnt_ctrl.bs_output_minusY") facial_blendShape.l_midBrow_dn;
+
+setAttr  ($pfx+"_l_out_brow_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_l_out_brow_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_l_out_brow_faceJnt_ctrl.bs_output_plusY") facial_blendShape.l_outBrow_up;
+connectAttr -f ($pfx+"_l_out_brow_faceJnt_ctrl.bs_output_minusY") facial_blendShape.l_outBrow_dn;
+
+setAttr  ($pfx+"_l_nose_faceJnt_ctrl.plusY") 1;
+connectAttr -f ($pfx+"_l_nose_faceJnt_ctrl.bs_output_plusY") facial_blendShape.l_sneer;
+
+setAttr  ($pfx+"_l_cheek_faceJnt_ctrl.plusX") 1;
+setAttr  ($pfx+"_l_cheek_faceJnt_ctrl.minusX") -1;
+connectAttr -f ($pfx+"_l_cheek_faceJnt_ctrl.bs_output_plusX") facial_blendShape.l_cheek_out;
+connectAttr -f ($pfx+"_l_cheek_faceJnt_ctrl.bs_output_minusX") facial_blendShape.l_cheek_in;
+
+setAttr  ($pfx+"_l_mouth_faceJnt_ctrl.plusX") 1;
+setAttr  ($pfx+"_l_mouth_faceJnt_ctrl.minusX") -1;
+connectAttr -f ($pfx+"_l_mouth_faceJnt_ctrl.bs_output_plusX") facial_blendShape.l_mouth_out;
+connectAttr -f ($pfx+"_l_mouth_faceJnt_ctrl.bs_output_minusX") facial_blendShape.l_mouth_in;
+setAttr  ($pfx+"_l_mouth_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_l_mouth_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_l_mouth_faceJnt_ctrl.bs_output_plusY") facial_blendShape.l_mouth_up;
+connectAttr -f ($pfx+"_l_mouth_faceJnt_ctrl.bs_output_minusY") facial_blendShape.l_mouth_dn;
+
+setAttr  ($pfx+"_l_up_mouth_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_l_up_mouth_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_l_up_mouth_faceJnt_ctrl.bs_output_plusY") facial_blendShape.l_up_sneer_out;
+connectAttr -f ($pfx+"_l_up_mouth_faceJnt_ctrl.bs_output_minusY") facial_blendShape.l_up_sneer_in;
+
+setAttr  ($pfx+"_l_low_mouth_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_l_low_mouth_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_l_low_mouth_faceJnt_ctrl.bs_output_plusY") facial_blendShape.l_dn_sneer_out;
+connectAttr -f ($pfx+"_l_low_mouth_faceJnt_ctrl.bs_output_minusY") facial_blendShape.l_dn_sneer_in;
+
+
+
+
+
+setAttr  ($pfx+"_r_in_brow_faceJnt_ctrl.plusY") 1;
+//setAttr  ($pfx+"_r_in_brow_faceJnt_ctrl.minusX") -1;
+setAttr  ($pfx+"_r_in_brow_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_r_in_brow_faceJnt_ctrl.bs_output_plusY") facial_blendShape.r_inBrow_up;
+connectAttr -f ($pfx+"_r_in_brow_faceJnt_ctrl.bs_output_minusY") facial_blendShape.r_inBrow_dn;
+//connectAttr -f ($pfx+"_r_in_brow_faceJnt_ctrl.bs_output_minusX") facial_blendShape.l_inBrow_in;
+
+setAttr  ($pfx+"_r_mid_brow_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_r_mid_brow_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_r_mid_brow_faceJnt_ctrl.bs_output_plusY") facial_blendShape.r_midBrow_up;
+connectAttr -f ($pfx+"_r_mid_brow_faceJnt_ctrl.bs_output_minusY") facial_blendShape.r_midBrow_dn;
+
+setAttr  ($pfx+"_r_out_brow_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_r_out_brow_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_r_out_brow_faceJnt_ctrl.bs_output_plusY") facial_blendShape.r_outBrow_up;
+connectAttr -f ($pfx+"_r_out_brow_faceJnt_ctrl.bs_output_minusY") facial_blendShape.r_outBrow_dn;
+
+setAttr  ($pfx+"_r_nose_faceJnt_ctrl.plusY") 1;
+connectAttr -f ($pfx+"_r_nose_faceJnt_ctrl.bs_output_plusY") facial_blendShape.r_sneer;
+
+setAttr  ($pfx+"_r_cheek_faceJnt_ctrl.plusX") 1;
+setAttr  ($pfx+"_r_cheek_faceJnt_ctrl.minusX") -1;
+connectAttr -f ($pfx+"_r_cheek_faceJnt_ctrl.bs_output_plusX") facial_blendShape.r_cheek_out;
+connectAttr -f ($pfx+"_r_cheek_faceJnt_ctrl.bs_output_minusX") facial_blendShape.r_cheek_in;
+
+setAttr  ($pfx+"_r_mouth_faceJnt_ctrl.plusX") 1;
+setAttr  ($pfx+"_r_mouth_faceJnt_ctrl.minusX") -1;
+connectAttr -f ($pfx+"_r_mouth_faceJnt_ctrl.bs_output_plusX") facial_blendShape.r_mouth_out;
+connectAttr -f ($pfx+"_r_mouth_faceJnt_ctrl.bs_output_minusX") facial_blendShape.r_mouth_in;
+setAttr  ($pfx+"_r_mouth_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_r_mouth_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_r_mouth_faceJnt_ctrl.bs_output_plusY") facial_blendShape.r_mouth_up;
+connectAttr -f ($pfx+"_r_mouth_faceJnt_ctrl.bs_output_minusY") facial_blendShape.r_mouth_dn;
+
+setAttr  ($pfx+"_r_up_mouth_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_r_up_mouth_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_r_up_mouth_faceJnt_ctrl.bs_output_plusY") facial_blendShape.r_up_sneer_out;
+connectAttr -f ($pfx+"_r_up_mouth_faceJnt_ctrl.bs_output_minusY") facial_blendShape.r_up_sneer_in;
+
+setAttr  ($pfx+"_r_low_mouth_faceJnt_ctrl.plusY") 1;
+setAttr  ($pfx+"_r_low_mouth_faceJnt_ctrl.minusY") -1;
+connectAttr -f ($pfx+"_r_low_mouth_faceJnt_ctrl.bs_output_plusY") facial_blendShape.r_dn_sneer_out;
+connectAttr -f ($pfx+"_r_low_mouth_faceJnt_ctrl.bs_output_minusY") facial_blendShape.r_dn_sneer_in;
+
+}
+
+
+

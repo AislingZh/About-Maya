@@ -1,0 +1,318 @@
+global proc shelf_AnimationFriendlyRigging () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 33
+        -height 33
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "asd" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Add Suffix to selected objects" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/suffix.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/suffix.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source js_addSuffixWin;\rjs_addSuffixWin;\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 31
+        -height 23
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "asd" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Hash Rename\r" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/hashRename.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/hashRename.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source js_hashRenameUI;\rjs_hashRenameUI\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Toggle Reference Mode" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Toggle Reference Mode" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/toRef.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/toRef.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "\rsource js_toggleRef;\rstring $tmp[0];\rclear $tmp;\rjs_toggleRef $tmp;\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 28
+        -height 25
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Auto Rotate" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Auto Rotate" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/makeRoll.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/makeRoll.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source js_autoRotate;\rjs_autoRotate;\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 28
+        -height 25
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Add Geo to Selected Skeletons" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Add Geo to Selected Skeletons" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "tinyBoldLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/addGeo.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/addGeo.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "string $tmp[0];\rclear $tmp;\rjs_createSkelGeo $tmp;\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Add plane for cutting polygonal geometry" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Add plane for cutting polygonal geometry" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "tinyBoldLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/addPlane.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/addPlane.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source js_cutPlane;\rjs_cutPlane_create;\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Cut selected object with planes" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Cut selected object with planes" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "tinyBoldLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/cutPlaneDone.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/cutPlaneDone.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source js_cutPlane;\r\rjs_cutPlane_cut 1;\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 33
+        -height 33
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Change Rotate Order On Selected Objects" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Change Rotate Order On Selected Objects" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "tinyBoldLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/rotOrder.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/rotOrder.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source js_rotationOrderWin;js_rotationOrderWin\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 28
+        -height 25
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Split selected joint" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Split selected joint" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "tinyBoldLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/splitJoint.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/splitJoint.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source js_splitSelJointUI;\njs_splitSelJointUI;\n" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 24
+        -height 25
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Create Stretchy Spline" 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Create Stretchy Spline" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "tinyBoldLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/scaleJoint.iff" 
+        -image1 "C:/Users/zhouhongyan/Documents/maya/2017/prefs/icons/scaleJoint.iff" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source js_createStretchSplineUI;\rjs_createStretchSplineUI;\r" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+} 

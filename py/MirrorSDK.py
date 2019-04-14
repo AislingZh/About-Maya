@@ -78,7 +78,7 @@ class MirrorSDK(object):
             attsList = atts.split(" ")
             offsetVal = 1    #驱动数值的偏移值
             if mirrDir == 2:
-                offsetVal *= -1;
+                offsetVal *= -1
             
             #print "get value"
 
@@ -98,8 +98,8 @@ class MirrorSDK(object):
                         mirAttr = driverAtrr[0]    #默认驱动节点不做镜像，如果要做在下面的if语句做修改
                         if QDriver == 1:
                             #镜像驱动节点
-                            strA = "_L_"
-                            strB = "_R_"
+                            strA = "_L"
+                            strB = "_R"
                             if strA in driverAtrr[0]:
                                 mirAttr = driverAtrr[0].replace(strA, strB)
                             elif  strB in driverAtrr[0]:

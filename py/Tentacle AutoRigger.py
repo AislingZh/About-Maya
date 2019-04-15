@@ -29,9 +29,18 @@ class TentacleAutoRig(object):
         self.ReName(IKJntChain, inputCurve + "_ikTfkJnt")
 
         #使用已有的曲线ikCurve给骨骼链做ik链
-        IKs = self.CreakIk(jntChin, inputCurve) 
+        ikSolvers = cmds.ikHandle(name=IKJntChain + '_IKHandle', sj=IKJntChain[0], ee=IKJntChain[JntNUm - 1], curve = inputCurve, sol='ikSplineSolver',ccv = True)
+        ikCurve = ikSolvers[2]
 
-        self.CreatIKCtrlSys(inputCurve, JntNUm/5)
+        self.CreakIkCtrl(IKJntChain, ikCurve, CtrlNum) #制作方案待定。。。。。
+
+        #复制曲线制作hair动力学系统
+        DynCurveOrg = cmds.duplicate(inputCurve)
+        DynObjects = self.CreatDynSys(DynCurveOrg) 
+
+        #复制曲线制作非线性变形器效果
+        deformCurve = cmds.duplicate(inputCurve)
+        self.CreatDeform(deformCurve)
 
         curves = cmds.duplicate(inputCurve, 2) #把曲线复制出3份出来，分别用于ik控制器，非线性变形器，头发动力学系统
         
@@ -50,7 +59,7 @@ class TentacleAutoRig(object):
 
         fkJnt = cmds.duplicate(jntChin) #复制骨骼链出来蒙皮骨骼
 
-         self.CreatVarFK(fkJnt, CtrlNum)
+        self.CreatVarFK(fkJnt, CtrlNum)
 
     def CreatJntChain(self, inputCurve = cmds.ls(sl = True), JntNum = 10, orientation = 'xyz'):
         
@@ -115,10 +124,20 @@ class TentacleAutoRig(object):
         for i in Obj:
             cmds.rename(i, Name + str(j))
             j = j + 1
+    
+    def CreatDeform(self, deformCurve):
+        #需要返回变形器节点，用以链接控制器属性
+        
+
+    def CreatDynSys(self, dynCurve):
+        #因为无法之间获取创建动力学曲线后生成的曲线毛囊等物件
+        #所以，此方法主要处理生成物件的命名与大组；
+        #然后获得动力学输出曲线，和解算器（用于链接开关）
+        dynSys = 
 
     
     
-    def CreatIKCtrlSys(self, inputCurve,ikCtrlNum):
+    def CreakIkCtrl(self, JntChain, inputCurve,ikCtrlNum):
         #给曲线创建簇控制点，并为簇点创建控制器
         #蒙皮骨骼约束ik控制器，使其能跟随运动
         #控制器的位置，需要从根部到尾部逐渐变密集 ？？？ 能否实现

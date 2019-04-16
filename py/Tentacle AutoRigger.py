@@ -31,8 +31,8 @@ class TentacleAutoRig(object):
         guideSurface = self.CreatGuideSurface(inputCurve, skinJntChain)
         cmds.skinCluster( guideSurface, skinJntChain, tsb=True, skinMethod = 0, maximumInfluences = 1, dropoffRate = 10.0 )
 
-        #给骨骼添加位置属性标识在面片上的位置
-        self.AddPosOtSurfaceAttr(skinJntChain, JntNUm)
+        #给骨骼添加位置属性,标识在面片上的位置
+        self.AddPosOnSurfaceAttr(skinJntChain, JntNUm)
         varFKCtrl = self.CreatVarFkCtrl(inputCurve, CtrlNum, guideSurface)
 
         #使用已有的曲线ikCurve给骨骼链做ik链
@@ -47,7 +47,7 @@ class TentacleAutoRig(object):
         DynObjects = self.CreatDynSys(DynCurveOrg) 
 
         #复制曲线制作非线性变形器效果
-        deformCurve = cmds.duplicate(inputCurve)
+        deformCurve = cmds.duplicate(inputCurve, name = InputCurve + '_deformCurve')
         self.CreatDeform(deformCurve)
 
         curves = cmds.duplicate(inputCurve, 2) #把曲线复制出3份出来，分别用于ik控制器，非线性变形器，头发动力学系统
@@ -119,7 +119,7 @@ class TentacleAutoRig(object):
         rotl = cmds.getAttr(JntChain[JntNum - 2] + '.jointOrient')[0]
         cmds.setAttr(JntChain[JntNum - 1] + '.jointOrient', rotl[0], rotl[1], rotl[2], type = "float3")
 
-        for i in range(1, jntNum):
+        for i in range(1, JntNum):
             cmds.parent(JntChain[i], JntChain[i - 1], absolute = True)
 
         print('created and oriented Jnt Chain')
@@ -160,7 +160,7 @@ class TentacleAutoRig(object):
         return guideSurface
 
 
-    def AddPosOtSurfaceAttr(self, jntChain, JntNUm):
+    def AddPosOnSurfaceAttr(self, jntChain, JntNUm):
         
         i = 0
         for jnt in jntChain:
@@ -180,6 +180,7 @@ class TentacleAutoRig(object):
             else:
                 FolliclePos = (1.0/num) * i
             
+            #创建曲线做控制器，并清理和添加一些属性
             currentCtrl = cmds.circle( name = ( 'ctrl_vFK' + str( i+1 )+ '_' + ctrName ), c=(0,0,0), nr=(1,0,0), sw=360, r=1.5, d=3, ut=0, tol=0.01, s=8, ch=False)
             
             cmds.setAttr(currentCtrl[0] + ".overrideEnabled", True)
@@ -230,6 +231,7 @@ class TentacleAutoRig(object):
 
 
     def Align(self, current, target):
+        #current：当前的位置，target：要对齐的目标位置
         targetPos = cmds.xform(target, q=True, ws=True, t=True)
         cmds.xform(current, ws=True, t=[targetPos[0],targetPos[1],targetPos[2]])
         targetRot = cmds.xform(target, q=True, ws=True, ro=True)
@@ -244,10 +246,12 @@ class TentacleAutoRig(object):
         else:
             return False
         
+        #创建毛囊节点
         follicleNode = cmds.createNode('follicle', name=nurbs + "_follicle")
         cmds.connectAttr(nurbs + '.local',  follicleNode + '.inputSurface')
         follicleTran = cmds.listRelatives(follicleNode, parent = True)[0]
 
+        #链接毛囊节点与面片
         cmds.connectAttr(nurbs + '.worldMatrix[0]',  follicleNode + '.inputWorldMatrix')
         cmds.connectAttr(follicleNode + '.outRotate',  follicleTran + '.rotate')
         cmds.connectAttr(follicleNode + '.outTranslate',  follicleTran + '.translate')
@@ -259,7 +263,52 @@ class TentacleAutoRig(object):
         return follicleNode
 
 
-            
+    def CreatDeform(self, dynCurve, jnt):
+        
+
+        #创建变形器，sin和 squash 
+
+        sineDefs = cmds.nonLinear(dynCurve, type='sine' )
+        squashDefs = cmds.nonLinear(dynCurve, type='squash' )
+
+        #创建变形器的控制器，整理并添加属性，并链接属性
+        deformCtrl = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_demform_ctrl")
+        
+        cmds.setAttr(deformCtrl + ".translateX", lock = True, keyable = False, channelBox = False)
+        cmds.setAttr(deformCtrl + ".translateZ", lock = True, keyable = False, channelBox = False)
+        cmds.setAttr(deformCtrl + ".scaleX", lock = True, keyable = False, channelBox = False)
+        cmds.setAttr(deformCtrl + ".scaleY", lock = True, keyable = False, channelBox = False)
+        cmds.setAttr(deformCtrl + ".scaleZ", lock = True, keyable = False, channelBox = False)
+        cmds.setAttr(deformCtrl + ".rotateX", lock = True, keyable = False, channelBox = False)
+        cmds.setAttr(deformCtrl + ".rotateY", lock = True, keyable = False, channelBox = False)
+        cmds.setAttr(deformCtrl + ".rotateZ", lock = True, keyable = False, channelBox = False)
+
+        cmds.addAttr( longName='sine_switch', attributeType='float', keyable=True, min=0, max=1)
+        cmds.addAttr( longName='amplitude', attributeType='float', keyable=True, min=-10, max=10 )
+        cmds.addAttr( longName='wavelength', attributeType='float', keyable=True, min=0)
+        cmds.addAttr( longName='offset', attributeType='float', keyable=True, min=-100, max=100)
+        cmds.addAttr( longName='dorpoff', attributeType='float', keyable=True, min=-10, max=10)
+        cmds.addAttr( longName='squash', attributeType='float', keyable=True, min=-2.5, max=2.5)
+
+
+        followGrp = cmds.group(deformCtrl, n = deformCtrl + "_follow")
+        offsetGrp = cmds.group(followGrp, n = deformCtrl + "_Offset")
+        self.Align(offsetGrp, jnt)
+        tranY = cmds.getAttr(offsetGrp + "translateY")
+        cmds.setAttr(offsetGrp + "translateY", tranY + 5)
+
+        #修改handle的旋转方向，使其能和曲线同向，+1--->-1
+        jntOri = cmds.getAttr(jnt + ".jointOrientY")
+        o = abs(jntOri)%360 /90 
+        if o == 0 :
+            cmds.setAttr(sineDefs[1] + "rotateZ", 90)
+        elif 0 == 1 :
+            cmds.setAttr(sineDefs[1] + "rotateX", -90)
+        elif 0 == 2 :
+            cmds.setAttr(sineDefs[1] + "rotateZ", -90)
+        elif 0 == 3 :
+            cmds.setAttr(sineDefs[1] + "rotateX", 90)
+
 
     # def ReName(self, Obj, Name):
     #     j = 0
@@ -271,11 +320,11 @@ class TentacleAutoRig(object):
         #需要返回变形器节点，用以链接控制器属性
         
 
-    def CreatDynSys(self, dynCurve):
-        #因为无法之间获取创建动力学曲线后生成的曲线毛囊等物件
-        #所以，此方法主要处理生成物件的命名与大组；
-        #然后获得动力学输出曲线，和解算器（用于链接开关）
-        dynSys = 
+    # def CreatDynSys(self, dynCurve):
+    #     #因为无法之间获取创建动力学曲线后生成的曲线毛囊等物件
+    #     #所以，此方法主要处理生成物件的命名与大组；
+    #     #然后获得动力学输出曲线，和解算器（用于链接开关）
+    #     dynSys = 
 
     
     

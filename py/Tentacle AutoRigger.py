@@ -193,11 +193,72 @@ class TentacleAutoRig(object):
             cmds.addAttr( longName='position', attributeType='float', keyable=True, min=0-FolliclePos, max=1-FolliclePos )
             cmds.addAttr( longName='radius', attributeType='float', keyable=True, min=0.0001, defaultValue=0.3 )
 
+            #创建毛囊
             currentFollicle = self.create_follicle(surf[0], uPos=FolliclePos, vPos=0.5)
+            cmds.setAttr(currentFollicle + ".simulationMethod", 0)
+            cmds.setAttr(currentFollicle + ".collide", 0)
+            cmds.setAttr(currentFollicle + ".flipDirection", True)
+            currentFollicleTran = cmds.listRelatives(currentFollicle, parent = True)[0]
+
+            #设置旋转强度属性
+            rotStrengthMul = cmds.shadingNode( 'multiplyDivide', asUtility = True, n = str( currentCtrl[0] ) + "_strength_mult" )
+            cmds.connectAttr(currentCtrl[0] + ".rotate", rotStrengthMul + ".input1")
+            cmds.connectAttr(currentCtrl[0] + ".rotateStrength", rotStrengthMul + ".input2X", f = True)
+            cmds.connectAttr(currentCtrl[0] + ".rotateStrength", rotStrengthMul + ".input2Y", f = True)
+            cmds.connectAttr(currentCtrl[0] + ".rotateStrength", rotStrengthMul + ".input2Z", f = True)
+
+            #设置控制器位置属性
+            jntPosPlus = cmds.shadingNode( 'plusMinusAverage', asUtility = True, n=currentCtrl[0] + '_jntposZeroCompensate' )
+            FolloclePos = cmds.getAttr(currentFollicle + ".parameterU")
+            cmds.setAttr(jntPosPlus + ".input1D[0]", FolloclePos)
+            cmds.connectAttr(currentCtrl[0] + '.position', jntPosPlus + '.input1D[1]', f=True )
+            cmds.connectAttr(jntPosPlus + '.output1D', currentFollicle + ".parameterU", f=True )
+
+            #给控制器设置层级
+            offsetGrp = cmds.group(em = True, n = currentCtrl + "_Offset")
+            self.Align(offsetGrp, currentCtrl)
+            cmds.parent(currentCtrl, offsetGrp)
+            followGrp = cmds.group(currentCtrl, n = currentCtrl + "_follow")
+
+            cmds.connectAttr(currentFollicleTran + ".translate", followGrp + ".translate")
+            cmds.parent(offsetGrp, ctrlGrp)
+
+            listOfCtrls.append(currentCtrl[0])
+            cmds.select(clear = True)
+
+        return listOfCtrls
 
 
-    def create_follicle(self, surface, uPos, vPos):
-        pass
+    def Align(self, current, target):
+        targetPos = cmds.xform(target, q=True, ws=True, t=True)
+        cmds.xform(current, ws=True, t=[targetPos[0],targetPos[1],targetPos[2]])
+        targetRot = cmds.xform(target, q=True, ws=True, ro=True)
+        cmds.xform(current, ws=True, ro=[targetRot[0],targetRot[1],targetRot[2]])
+
+
+    def create_follicle(self, nurbs, uPos, vPos):
+        if cmds.objectType( nurbs, isType='transform' ):
+            nurbs = cmds.listRelatives(nurbs, s = True)
+        elif cmds.objectType( nurbs, isType='nurbsSurface'):
+            pass
+        else:
+            return False
+        
+        follicleNode = cmds.createNode('follicle', name=nurbs + "_follicle")
+        cmds.connectAttr(nurbs + '.local',  follicleNode + '.inputSurface')
+        follicleTran = cmds.listRelatives(follicleNode, parent = True)[0]
+
+        cmds.connectAttr(nurbs + '.worldMatrix[0]',  follicleNode + '.inputWorldMatrix')
+        cmds.connectAttr(follicleNode + '.outRotate',  follicleTran + '.rotate')
+        cmds.connectAttr(follicleNode + '.outTranslate',  follicleTran + '.translate')
+        cmds.setAttr(follicleNode + '.parameterU', uPos)
+        cmds.setAttr(follicleNode + '.parameterV', vPos)
+        cmds.setAttr(follicleTran + '.rotate', lock = True)
+        cmds.setAttr(follicleTran + '.rotate', lock = True)
+
+        return follicleNode
+
+
             
 
     # def ReName(self, Obj, Name):

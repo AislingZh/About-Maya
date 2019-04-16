@@ -23,13 +23,21 @@ class TentacleAutoRig(object):
 
         #根据曲线和设定的骨骼数创建骨骼，并复制两份出来
         skinJntChain = self.CreatJntChin(inputCurve, JntNUm)
-        IKJntChain = cmds.duplicate(skinJntChain, rr = True)
-        self.ReName(IKJntChain, inputCurve + "_IKJnt")
-        ikTfkJnt = cmds.duplicate(skinJntChain, rr = True)
-        self.ReName(IKJntChain, inputCurve + "_ikTfkJnt")
+        
+        IKJntChain = cmds.duplicate(skinJntChain, name = InputCurve + '_ikJnt', parentOnly = True)
+        ikTfkJnt = cmds.duplicate(skinJntChain, name = InputCurve + '_ikTfkJnt', parentOnly = True)
+
+        #创建定位用的面片并蒙皮
+        guideSurface = self.CreatGuideSurface(inputCurve, skinJntChain)
+        cmds.skinCluster( guideSurface, skinJntChain, tsb=True, skinMethod = 0, maximumInfluences = 1, dropoffRate = 10.0 )
+
+        #给骨骼添加位置属性标识在面片上的位置
+        self.AddPosOtSurfaceAttr(skinJntChain, JntNUm)
+        varFKCtrl = self.CreatVarFkCtrl(inputCurve, CtrlNum, guideSurface)
 
         #使用已有的曲线ikCurve给骨骼链做ik链
         ikSolvers = cmds.ikHandle(name=IKJntChain + '_IKHandle', sj=IKJntChain[0], ee=IKJntChain[JntNUm - 1], curve = inputCurve, sol='ikSplineSolver',ccv = True)
+
         ikCurve = ikSolvers[2]
 
         self.CreakIkCtrl(IKJntChain, ikCurve, CtrlNum) #制作方案待定。。。。。
@@ -119,11 +127,84 @@ class TentacleAutoRig(object):
 
         return JntChain
 
-    def ReName(self, Obj, Name):
-        j = 0
-        for i in Obj:
-            cmds.rename(i, Name + str(j))
-            j = j + 1
+    def CreatGuideSurface(self, InputCurve, JntChain):
+        #用骨骼定位，先创建两条曲线，再根据曲线创建面片
+        loftCurves = []
+        for i in range(2):
+            listOffsetJnts = cmds.duplicate(JntChain, rr = True, name = 'b' + InputCurve + '_offset', parentOnly = True)
+
+            for jnt in listOffsetJnts:
+                if i == 0:
+                    cmds.move(0,0,-0.5, jnt, relative = True, objectSpace = True, preserveChildPosition = True)
+                if i == 1:
+                    cmds.move(0,0,0.5, jnt, relative = True, objectSpace = True, preserveChildPosition = True)
+                
+            loftCurvePoints = []
+
+            for each in listOffsetJnts:
+                jntPos = cmds.xform(each, q = True, t = True, ws = True)
+                loftCurvePoints.append(jntPos)
+            
+            loftcurve = cmds.curve(name = InputCurve + '_loftCurve' + str(i), degree = 1, point = loftCurvePoints)
+            loftCurves.append(loftcurve)
+            cmds.delete(listOffsetJnts)
+        #创建surface面片
+        guideSurface = cmds.loft(loftCurves[0], loftCurves[1], name = InputCurve + '_gude_surface', ar=True, rsn=True, d=3, ss=1, object=True, ch=False, polygon=0 )
+        guideSurface = cmds.rebuildSurface( guideSurface ,ch=1, rpo=1, rt=0, end=1, kr=1, kcp=0, kc=0, su=0, du=3, sv=1, dv=3, tol=0.01, fr=0, dir=2 )
+        #清理掉不用的文件
+        cmds.delete(loftCurves)
+        cmds.setAttr(guideSurface[0] + ".inheritsTransform", False)
+        cmds.setAttr(guideSurface[0] + ".overrideEnabled", True)
+        cmds.setAttr(guideSurface[0] + ".overrideDisplayType", 1)
+
+        return guideSurface
+
+
+    def AddPosOtSurfaceAttr(self, jntChain, JntNUm):
+        
+        i = 0
+        for jnt in jntChain:
+            cmds.addAttr( jnt, longName = 'jointPosition', attributeType = 'float', keyable = True )
+            cmds.setAttr( jnt + '.jointPosition', i*1.0/(len(JntChain) - 1), lock = True)
+            i = i +1
+        
+    
+    def CreatVarFkCtrl(self, ctrName, num, surf):
+        ctrlGrp = cmds.group( name = ctrName + '_VFkCtrls', empty = True, world = True)
+        cmds.setAttr(ctrlGrp + ".inheritsTransform ", 0)
+        listOfCtrls = []
+
+        for i in range(num):
+            if num > 1:
+                FolliclePos = (1.0/(num - 1)) * i
+            else:
+                FolliclePos = (1.0/num) * i
+            
+            currentCtrl = cmds.circle( name = ( 'ctrl_vFK' + str( i+1 )+ '_' + ctrName ), c=(0,0,0), nr=(1,0,0), sw=360, r=1.5, d=3, ut=0, tol=0.01, s=8, ch=False)
+            
+            cmds.setAttr(currentCtrl[0] + ".overrideEnabled", True)
+            cmds.setAttr(currentCtrl[0] + ".overrideColor", 4)
+            cmds.setAttr(currentCtrl[0] + ".translateX", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(currentCtrl[0] + ".translateY", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(currentCtrl[0] + ".translateZ", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(currentCtrl[0] + ".scaleX", lock = True)
+
+            cmds.addAttr( longName='rotateStrength', attributeType='float', keyable=True, defaultValue=1)
+            cmds.addAttr( longName='position', attributeType='float', keyable=True, min=0-FolliclePos, max=1-FolliclePos )
+            cmds.addAttr( longName='radius', attributeType='float', keyable=True, min=0.0001, defaultValue=0.3 )
+
+            currentFollicle = self.create_follicle(surf[0], uPos=FolliclePos, vPos=0.5)
+
+
+    def create_follicle(self, surface, uPos, vPos):
+        pass
+            
+
+    # def ReName(self, Obj, Name):
+    #     j = 0
+    #     for i in Obj:
+    #         cmds.rename(i, Name + str(j))
+    #         j = j + 1
     
     def CreatDeform(self, deformCurve):
         #需要返回变形器节点，用以链接控制器属性

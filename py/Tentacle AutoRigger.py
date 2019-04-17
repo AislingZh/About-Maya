@@ -48,12 +48,13 @@ class TentacleAutoRig(object):
 
         #复制曲线制作非线性变形器效果
         deformCurve = cmds.duplicate(inputCurve, name = InputCurve + '_deformCurve')
-        self.CreatDeform(deformCurve)
+        deformGrps = self.CreatDeform(deformCurve,skinJntChain[0])
+        deformCtrlGrp = deformGrps[0]
+        deformHandleGrp = deformGrps[1]
 
         curves = cmds.duplicate(inputCurve, 2) #把曲线复制出3份出来，分别用于ik控制器，非线性变形器，头发动力学系统
         
         self.CreatHairDyn(curves[1])
-        self.CreatDeform(curves[2])
 
         cmds.blendShape(curves, inputCurve) #对曲线做bs，并以inputCurve
 
@@ -180,7 +181,7 @@ class TentacleAutoRig(object):
             else:
                 FolliclePos = (1.0/num) * i
             
-            #创建曲线做控制器，并清理和添加一些属性
+            #创建loc做控制器，并清理和添加一些属性
             currentCtrl = cmds.circle( name = ( 'ctrl_vFK' + str( i+1 )+ '_' + ctrName ), c=(0,0,0), nr=(1,0,0), sw=360, r=1.5, d=3, ut=0, tol=0.01, s=8, ch=False)
             
             cmds.setAttr(currentCtrl[0] + ".overrideEnabled", True)
@@ -265,16 +266,19 @@ class TentacleAutoRig(object):
 
     def CreatDeform(self, dynCurve, jnt):
         
+        deformGrps = []
 
         #创建变形器，sin和 squash 
 
-        sineDefs = cmds.nonLinear(dynCurve, type='sine' )
-        squashDefs = cmds.nonLinear(dynCurve, type='squash' )
+        sineDefs = cmds.nonLinear(dynCurve, type='sine', name = dynCurve + "_sine" )
+        squashDefs = cmds.nonLinear(dynCurve, type='squash', lowBound = -2, highBound = 0, name = dynCurve + "_squash" )
+        self.Align(squashDefs[1], jnt)
 
         #创建变形器的控制器，整理并添加属性，并链接属性
-        deformCtrl = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_demform_ctrl")
+        deformCtrl = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_demform_ctrl")[0]
         
-        cmds.setAttr(deformCtrl + ".translateX", lock = True, keyable = False, channelBox = False)
+        cmds.transformLimits(deformCtrl, tx = (0,1), etx=(True, False))
+        cmds.setAttr(deformCtrl + ".translateY", lock = True, keyable = False, channelBox = False)
         cmds.setAttr(deformCtrl + ".translateZ", lock = True, keyable = False, channelBox = False)
         cmds.setAttr(deformCtrl + ".scaleX", lock = True, keyable = False, channelBox = False)
         cmds.setAttr(deformCtrl + ".scaleY", lock = True, keyable = False, channelBox = False)
@@ -283,31 +287,102 @@ class TentacleAutoRig(object):
         cmds.setAttr(deformCtrl + ".rotateY", lock = True, keyable = False, channelBox = False)
         cmds.setAttr(deformCtrl + ".rotateZ", lock = True, keyable = False, channelBox = False)
 
-        cmds.addAttr( longName='sine_switch', attributeType='float', keyable=True, min=0, max=1)
-        cmds.addAttr( longName='amplitude', attributeType='float', keyable=True, min=-10, max=10 )
-        cmds.addAttr( longName='wavelength', attributeType='float', keyable=True, min=0)
-        cmds.addAttr( longName='offset', attributeType='float', keyable=True, min=-100, max=100)
-        cmds.addAttr( longName='dorpoff', attributeType='float', keyable=True, min=-10, max=10)
-        cmds.addAttr( longName='squash', attributeType='float', keyable=True, min=-2.5, max=2.5)
+        cmds.addAttr( longName='deform_switch', attributeType='float', keyable=True, min=0, max=1 )
+        cmds.addAttr( longName='amplitude', attributeType='float', keyable=True, min=-20, max=20, defaultValue = 1 )
+        cmds.addAttr( longName='wavelength', attributeType='float', keyable=True, min=1, max =10 , defaultValue = 5)
+        cmds.addAttr( longName='offset', attributeType='float', keyable=True, min=-10, max=10)
+        cmds.addAttr( longName='dropoff', attributeType='float', keyable=True, min=-10, max=10, defaultValue = 10)
+
+        cmds.addAttr( longName='factor', attributeType='float', keyable=True, min=-20, max=20 )
+        cmds.addAttr( longName='expand', attributeType='float', keyable=True, min=0, max=10)
+        cmds.addAttr( longName='maxExpandPos', attributeType='float', keyable=True, min=0.1, max=9.9, defaultValue = 1)
+        cmds.addAttr( longName='startSmooth', attributeType='float', keyable=True, min=0, max=1 )
+        cmds.addAttr( longName='endSmooth', attributeType='float', keyable=True, min=0, max=1)
 
 
         followGrp = cmds.group(deformCtrl, n = deformCtrl + "_follow")
         offsetGrp = cmds.group(followGrp, n = deformCtrl + "_Offset")
+        deformGrps.append(offsetGrp)
         self.Align(offsetGrp, jnt)
-        tranY = cmds.getAttr(offsetGrp + "translateY")
-        cmds.setAttr(offsetGrp + "translateY", tranY + 5)
+        tranY = cmds.getAttr(offsetGrp + ".translateY")
+        cmds.setAttr(offsetGrp + ".translateY", tranY + 5)
 
         #修改handle的旋转方向，使其能和曲线同向，+1--->-1
         jntOri = cmds.getAttr(jnt + ".jointOrientY")
         o = abs(jntOri)%360 /90 
         if o == 0 :
-            cmds.setAttr(sineDefs[1] + "rotateZ", 90)
+            cmds.setAttr(sineDefs[1] + ".rotateZ", 90)
+            cmds.setAttr(squashDefs[1] + ".rotateZ", 90)
         elif 0 == 1 :
-            cmds.setAttr(sineDefs[1] + "rotateX", -90)
+            cmds.setAttr(sineDefs[1] + ".rotateX", -90)
+            cmds.setAttr(squashDefs[1] + ".rotateX", -90)
         elif 0 == 2 :
-            cmds.setAttr(sineDefs[1] + "rotateZ", -90)
+            cmds.setAttr(sineDefs[1] + ".rotateZ", -90)
+            cmds.setAttr(squashDefs[1] + ".rotateZ", -90)
         elif 0 == 3 :
-            cmds.setAttr(sineDefs[1] + "rotateX", 90)
+            cmds.setAttr(sineDefs[1] + ".rotateX", 90)
+            cmds.setAttr(squashDefs[1] + ".rotateX", 90)
+        
+        #链接控制器和变形器的属性
+        squashRange = cmds.shadingNode("setRange", asUtility = True, name = sineDefs[0] + "_squash_setRange")
+
+        cmds.connectAttr(deformCtrl + ".factor", squashRange + ".valueX" )
+        cmds.setAttr(squashRange + ".minX", -2)
+        cmds.setAttr(squashRange + ".maxX", 2)
+        cmds.setAttr(squashRange + ".oldMinX", -20)
+        cmds.setAttr(squashRange + ".oldMaxX", 20)
+        cmds.connectAttr(squashRange + ".outValueX", squashDefs[0] + ".factor" )
+
+        cmds.connectAttr(deformCtrl + ".expand", squashRange + ".valueY" )
+        cmds.setAttr(squashRange + ".minY", 0)
+        cmds.setAttr(squashRange + ".maxY", 1)
+        cmds.setAttr(squashRange + ".oldMinY", 0)
+        cmds.setAttr(squashRange + ".oldMaxY", 10)
+        cmds.connectAttr(squashRange + ".outValueY", squashDefs[0] + ".expand" )
+
+        cmds.connectAttr(deformCtrl + ".maxExpandPos", squashRange + ".valueZ" )
+        cmds.setAttr(squashRange + ".minZ", 0.01)
+        cmds.setAttr(squashRange + ".maxZ", 0.99)
+        cmds.setAttr(squashRange + ".oldMinZ", 0.1)
+        cmds.setAttr(squashRange + ".oldMaxZ", 10)
+        cmds.connectAttr(squashRange + ".outValueZ", squashDefs[0] + ".maxExpandPos" )
+
+        cmds.connectAttr(deformCtrl + ".startSmooth", squashDefs[0] + ".startSmoothness" )
+        cmds.connectAttr(deformCtrl + ".endSmooth", squashDefs[0] + ".endSmoothness" )
+
+
+        sineRange = cmds.shadingNode("setRange", asUtility = True, name = sineDefs[0] + "_sine_setRange")
+
+        cmds.connectAttr(deformCtrl + ".amplitude", sineRange + ".valueX" )
+        cmds.setAttr(sineRange + ".minX", -5)
+        cmds.setAttr(sineRange + ".maxX", 5)
+        cmds.setAttr(sineRange + ".oldMinX", -20)
+        cmds.setAttr(sineRange + ".oldMaxX", 20)
+        cmds.connectAttr(sineRange + ".outValueX", sineDefs[0] + ".amplitude" )
+
+        cmds.connectAttr(deformCtrl + ".wavelength", sineRange + ".valueY" )
+        cmds.setAttr(sineRange + ".minY", 1)
+        cmds.setAttr(sineRange + ".maxY", 10)
+        cmds.setAttr(sineRange + ".oldMinY", 1)
+        cmds.setAttr(sineRange + ".oldMaxY", 10)
+        cmds.connectAttr(sineRange + ".outValueY", sineDefs[0] + ".wavelength" )
+
+        cmds.connectAttr(deformCtrl + ".offset", sineDefs[0] + ".offset" )
+
+        cmds.connectAttr(deformCtrl + ".dropoff", sineRange + ".valueZ" )
+        cmds.setAttr(sineRange + ".minZ", -1)
+        cmds.setAttr(sineRange + ".maxZ", 1)
+        cmds.setAttr(sineRange + ".oldMinZ", -10)
+        cmds.setAttr(sineRange + ".oldMaxZ", 10)
+        cmds.connectAttr(sineRange + ".outValueZ", sineDefs[0] + ".dropoff" )
+
+        cmds.pointConstraint(deformCtrl, squashDefs[1], mo = True)
+        cmds.pointConstraint(deformCtrl, sineDefs[1], mo = True)
+
+        deformGrp = cmds.group(squashDefs[1],sineDefs[1], n = dynCurve + "deform_Grp")
+        deformGrps.append(offsetGrp)
+
+        return offsetGrp
 
 
     # def ReName(self, Obj, Name):

@@ -22,10 +22,10 @@ class TentacleAutoRig(object):
     def BuildAutoRig(self, inputCurve, CtrlNum, JntNUm):
 
         #根据曲线和设定的骨骼数创建骨骼，并复制两份出来
-        skinJntChain = self.CreatJntChin(inputCurve, JntNUm)
+        skinJntChain = self.CreatJntChain(inputCurve, JntNUm)
         
-        IKJntChain = cmds.duplicate(skinJntChain, name = InputCurve + '_ikJnt', parentOnly = True)
-        ikTfkJnt = cmds.duplicate(skinJntChain, name = InputCurve + '_ikTfkJnt', parentOnly = True)
+        IKJntChain = cmds.duplicate(skinJntChain, name = inputCurve + '_ikJnt', parentOnly = True)
+        ikTfkJnt = cmds.duplicate(skinJntChain, name = inputCurve + '_ikTfkJnt', parentOnly = True)
 
         #创建定位用的面片并蒙皮
         guideSurface = self.CreatGuideSurface(inputCurve, skinJntChain)
@@ -43,32 +43,35 @@ class TentacleAutoRig(object):
         self.CreakIkCtrl(IKJntChain, ikCurve, CtrlNum) #制作方案待定。。。。。
 
         #复制曲线制作hair动力学系统
-        DynCurveOrg = cmds.duplicate(inputCurve)
-        DynObjects = self.CreatDynSys(DynCurveOrg) 
+        DynCurve = cmds.duplicate(inputCurve)
+        DynObjects = self.CreatDynSys(DynCurve)
 
         #复制曲线制作非线性变形器效果
-        deformCurve = cmds.duplicate(inputCurve, name = InputCurve + '_deformCurve')
+        deformCurve = cmds.duplicate(inputCurve, name = inputCurve + '_deformCurve')
         deformGrps = self.CreatDeform(deformCurve,skinJntChain[0])
         deformCtrlGrp = deformGrps[0]
         deformHandleGrp = deformGrps[1]
 
-        curves = cmds.duplicate(inputCurve, 2) #把曲线复制出3份出来，分别用于ik控制器，非线性变形器，头发动力学系统
+
+
+
+        # curves = cmds.duplicate(inputCurve, 2) #把曲线复制出3份出来，分别用于ik控制器，非线性变形器，头发动力学系统
         
-        self.CreatHairDyn(curves[1])
+        # self.CreatHairDyn(curves[1])
 
-        cmds.blendShape(curves, inputCurve) #对曲线做bs，并以inputCurve
+        # cmds.blendShape(curves, inputCurve) #对曲线做bs，并以inputCurve
 
-        ikTfkJnt = cmds.duplicate(jntChin) #复制骨骼链出来，作为ikfk链接的中间骨骼
+        # ikTfkJnt = cmds.duplicate(jntChin) #复制骨骼链出来，作为ikfk链接的中间骨骼
 
-        j = 0
-        for i in jntChin:
+        # j = 0
+        # for i in jntChin:
 
-            alignCons = cmds.parentConstraint(i, ikTfkJnt[i], mo = True)
-            j = j+1
+        #     alignCons = cmds.parentConstraint(i, ikTfkJnt[i], mo = True)
+        #     j = j+1
 
-        fkJnt = cmds.duplicate(jntChin) #复制骨骼链出来蒙皮骨骼
+        # fkJnt = cmds.duplicate(jntChin) #复制骨骼链出来蒙皮骨骼
 
-        self.CreatVarFK(fkJnt, CtrlNum)
+        # self.CreatVarFK(fkJnt, CtrlNum)
 
     def CreatJntChain(self, inputCurve = cmds.ls(sl = True), JntNum = 10, orientation = 'xyz'):
         
@@ -166,7 +169,7 @@ class TentacleAutoRig(object):
         i = 0
         for jnt in jntChain:
             cmds.addAttr( jnt, longName = 'jointPosition', attributeType = 'float', keyable = True )
-            cmds.setAttr( jnt + '.jointPosition', i*1.0/(len(JntChain) - 1), lock = True)
+            cmds.setAttr( jnt + '.jointPosition', i*1.0/(len(jntChain) - 1), lock = True)
             i = i +1
         
     
@@ -380,30 +383,59 @@ class TentacleAutoRig(object):
         cmds.pointConstraint(deformCtrl, sineDefs[1], mo = True)
 
         deformGrp = cmds.group(squashDefs[1],sineDefs[1], n = dynCurve + "deform_Grp")
-        deformGrps.append(offsetGrp)
+        deformGrps.append(deformGrp)
 
         return offsetGrp
 
 
-    # def ReName(self, Obj, Name):
-    #     j = 0
-    #     for i in Obj:
-    #         cmds.rename(i, Name + str(j))
-    #         j = j + 1
     
-    def CreatDeform(self, deformCurve):
-        #需要返回变形器节点，用以链接控制器属性
         
 
-    # def CreatDynSys(self, dynCurve):
-    #     #因为无法之间获取创建动力学曲线后生成的曲线毛囊等物件
-    #     #所以，此方法主要处理生成物件的命名与大组；
-    #     #然后获得动力学输出曲线，和解算器（用于链接开关）
-    #     dynSys = 
+    def CreatDynSys(self, dynCurve):
+        #因为无法之间获取创建动力学曲线后生成的曲线毛囊等物件
+        #所以，此方法主要处理生成物件的命名与大组；
+        #然后获得动力学输出曲线，和解算器（用于链接开关）
+        
+        ## test 手动创建节点并链接
+
+        orgCurve = cmds.duplicate(dynCurve, rr = True, name = dynCurve + '_start')
+        orgCurveShape = cmds.listRelatives(orgCurve, s = True)[0]
+        dynCurveShape = cmds.listRelatives(dynCurve, s = True)[0]
+
+        rebuildNode = cmds.createNode('rebuildCurve', name=orgCurveShape + "_rebuild")
+
+        cmds.connectAttr(orgCurveShape + ".worldSpace[0]", rebuildNode + ".inputCurve")
+
+        newCurve = cmds.createNode('nurbsCurve', name=rebuildNode + "_rebuildCurveShape")
+        cmds.connectAttr(rebuildNode + ".outputCurve", newCurve + ".create")
+
+
+        follicleNode = cmds.createNode('follicle', name=dynCurve + "_follicle")
+        cmds.connectAttr( newCurve + ".local", follicleNode + ".startPosition")
+        cmds.connectAttr( orgCurve[0] + ".worldMatrix[0]", follicleNode + ".startPositionMatrix")
+        cmds.connectAttr( follicleNode + ".outCurve", dynCurveShape + ".create")
+
+        hairSystemNode = cmds.createNode('hairSystem', name=dynCurve + "_hairSystem")
+        cmds.connectAttr( follicleNode + ".outHair", hairSystemNode + ".inputHair[0]")
+        cmds.connectAttr( hairSystemNode + ".outputHair[0]", follicleNode + ".currentPosition")
+
+        nucleusNode = cmds.createNode('nucleus', name="_nucleus")
+        cmds.connectAttr( hairSystemNode + ".currentState", nucleusNode + ".inputActive[0]")
+        cmds.connectAttr( hairSystemNode + ".startState", nucleusNode + ".inputActiveStart[0]")
+        cmds.connectAttr( nucleusNode + ".outputObjects[0]", hairSystemNode + ".nextState")
+        cmds.connectAttr( nucleusNode + ".startFrame", hairSystemNode + ".startFrame")
+
+        cmds.connectAttr("time1.outTime", hairSystemNode + ".currentTime")
+        cmds.connectAttr("time1.outTime", nucleusNode + ".currentTime")
+
+        DynGrp = cmds.group(orgCurve, newCurve, follicleNode, hairSystemNode, nucleusNode, name = dynCurve + "_DynGrp")
+
+        return nucleusNode
 
     
     
-    def CreakIkCtrl(self, JntChain, inputCurve,ikCtrlNum):
+    def CreakIkCtrl(self, JntChain, inputCurve, ikCtrlNum):
         #给曲线创建簇控制点，并为簇点创建控制器
         #蒙皮骨骼约束ik控制器，使其能跟随运动
         #控制器的位置，需要从根部到尾部逐渐变密集 ？？？ 能否实现
+        pass

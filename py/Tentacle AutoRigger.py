@@ -21,11 +21,8 @@ class TentacleAutoRig(object):
     
     def BuildAutoRig(self, inputCurve, CtrlNum, JntNUm):
 
-        #根据曲线和设定的骨骼数创建骨骼，并复制两份出来
+        #根据曲线和设定的骨骼数创建骨骼
         skinJntChain = self.CreatJntChain(inputCurve, JntNUm)
-        
-        IKJntChain = cmds.duplicate(skinJntChain, name = inputCurve + '_ikJnt', parentOnly = True)
-        ikTfkJnt = cmds.duplicate(skinJntChain, name = inputCurve + '_ikTfkJnt', parentOnly = True)
 
         #创建定位用的面片并蒙皮
         guideSurface = self.CreatGuideSurface(inputCurve, skinJntChain)
@@ -34,14 +31,7 @@ class TentacleAutoRig(object):
         #给骨骼添加位置属性,标识在面片上的位置
         self.AddPosOnSurfaceAttr(skinJntChain, JntNUm)
         varFKCtrl = self.CreatVarFkCtrl(inputCurve, CtrlNum, guideSurface)
-
-        
-        #使用inputCurve曲线给骨骼链做ik链
-        ikSolvers = cmds.ikHandle(name=IKJntChain + '_IKHandle', sj=IKJntChain[0], ee=IKJntChain[JntNUm - 1], curve = inputCurve, sol='ikSplineSolver',ccv = True)
-
-        ikCurve = ikSolvers[2]
-
-        
+     
 
         #复制曲线制作hair动力学系统
         DynCurve = cmds.duplicate(inputCurve, name = inputCurve + '_DynCurve')
@@ -56,11 +46,50 @@ class TentacleAutoRig(object):
 
         #根据inputCurve去创建ik控制器，并返回ik控制器控制的曲线，会用此曲线去与inputCurve做blendshape
 
-        ikCtrlCurve = self.CreakIkCtrl(IKJntChain, inputCurve, CtrlNum) 
+        ikCtrlSys = self.CreakIkCtrl( inputCurve, CtrlNum) 
+        ikCtrlCurve = ikCtrlSys[0]
 
+        #使用inputCurve曲线给骨骼链做ik链，并通过约束将运动传递到ikTfkjnt
+        IKJntChain = cmds.duplicate(skinJntChain, name = inputCurve + '_ikJnt', parentOnly = True)
+        ikSolvers = cmds.ikHandle(name=IKJntChain + '_IKHandle', sj=IKJntChain[0], ee=IKJntChain[JntNUm - 1], curve = inputCurve, sol='ikSplineSolver',ccv = False)
+        ikBS = cmds.blendShape(ikCtrlCurve, deformCurve, DynCurve, inputCurve)
+
+        ikTfkJnt = cmds.duplicate(skinJntChain, name = inputCurve + '_ikTfkJnt', parentOnly = True)
+        for i in range(0,len(IKJntChain)):
+            cmds.parentConstraint(IKJntChain[i], ikTfkJnt[i], mo = True)
+        
+        
+        #创建主控制器   ！！！！添加特色控制的相关属性！！！
+        mainCtrl = cmds.curve( name="MainCtrl", d = 1, p = [(-1,1,1),(1,1,1),(1,1,-1),(-1,1,-1),(-1,1,1),(-1,-1,1),(-1,-1,-1),(1,-1,-1),(1,-1,1),(-1,-1,1),(1,-1,1),(1,1,1),(1,1,-1),(1,-1,-1),(-1,-1,-1),(-1,1,-1)])
+        mainCtrlShape = cmds.listRelatives(mainCtrl, s = True)
+        cmds.setAttr(mainCtrlShape + ".overrideEnabled", True)
+        cmds.setAttr(mainCtrlShape + ".overrideColor", 17)
+        mainCtrlGrp = cmds.group(mainCtrl, name = mainCtrl + "_offset")
+        self.Align(mainCtrlGrp, ikTfkJnt[0])
+
+
+        #整理层级
+        #####模型组
+        geoGrp = cmds.cmds.group( name = inputCurve + '_geoGrp', empty = True, world = True)
+        #####控制器组-----ik， fk控制器； input曲线，jnt组
+        ctrlGrp = cmds.cmds.group( name = inputCurve + '_ctrlGrp', empty = True, world = True)
+        FKCtrlGrp = cmds.listRelatives(varFKCtrl, fullPath = True)[0].split("|", 3)[1]
+        jntGrp = cmds.group(skinJntChain,ikTfkJnt, IKJntChain, name = "jntGrp")
+        cmds.parent(FKCtrlGrp, ikCtrlSys[1], deformCtrlGrp, inputCurve, mainCtrlGrp, jntGrp, ctrlGrp)
+        #####其他组
+        OtherGrp = cmds.cmds.group( name = inputCurve + '_otherGrp', empty = True, world = True)
+        DynGrp = cmds.listRelatives(DynObjects, fullPath = True)[0].split("|", 3)[1]
+        ikSysGrp = cmds.listRelatives(ikCtrlCurve, fullPath = True)[0].split("|", 3)[1]
+
+        cmds.parent(DynGrp, deformHandleGrp, guideSurface, ikSysGrp, OtherGrp)
+        ########总层级
+        allGrp = cmds.cmds.group(geoGrp, ctrlGrp, OtherGrp, name = inputCurve + '_allGrp', world = True)
+
+        ######使用节点控制蒙皮骨骼的盘起等特殊功能
 
 
         # curves = cmds.duplicate(inputCurve, 2) #把曲线复制出3份出来，分别用于ik控制器，非线性变形器，头发动力学系统
+
         
         # self.CreatHairDyn(curves[1])
 
@@ -390,7 +419,7 @@ class TentacleAutoRig(object):
         deformGrp = cmds.group(squashDefs[1],sineDefs[1], n = dynCurve + "deform_Grp")
         deformGrps.append(deformGrp)
 
-        return offsetGrp
+        return deformGrps
 
 
     
@@ -465,6 +494,8 @@ class TentacleAutoRig(object):
         CCurve = cmds.duplicate(inputCurve, name = outputCurve + '_CC')[0]
         CCurve = cmds.rebuildCurve(CCurve, d = 3, s = cvNum - 1)[0]
 
+        curveGRp = cmds.group(CCurve, outputCurve, name ='ikCtrlcurve_Grp', world = True)
+
         cHnadleGrp = cmds.group(name = CCurve + '_cHandle', empty = True, world = True)
         IKCtrlGrp = cmds.group(name = inputCurve + '_ikCtrlGrp', empty = True, world = True)
         pocLocGrps = cmds.group(name = inputCurve + "_pocGrp", empty = True, world = True)
@@ -523,7 +554,9 @@ class TentacleAutoRig(object):
         wireNode = cmds.wire(outputCurve, w = CCurve, name = "ikCtrlWire")[0]
         cmds.setAttr(wireNode + ".dropoffDistance[0]", 99999999)
 
-        return outputCurve
+        IKCtrlSysGrp = cmds.group(curveGRp, cHnadleGrp, pocLocGrps, name ='IKCtrlSys_Grp', world = True)
+
+        return outputCurve, IKCtrlGrp
         
 
 

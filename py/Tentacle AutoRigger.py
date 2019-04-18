@@ -35,15 +35,16 @@ class TentacleAutoRig(object):
         self.AddPosOnSurfaceAttr(skinJntChain, JntNUm)
         varFKCtrl = self.CreatVarFkCtrl(inputCurve, CtrlNum, guideSurface)
 
-        #使用已有的曲线ikCurve给骨骼链做ik链
+        
+        #使用inputCurve曲线给骨骼链做ik链
         ikSolvers = cmds.ikHandle(name=IKJntChain + '_IKHandle', sj=IKJntChain[0], ee=IKJntChain[JntNUm - 1], curve = inputCurve, sol='ikSplineSolver',ccv = True)
 
         ikCurve = ikSolvers[2]
 
-        self.CreakIkCtrl(IKJntChain, ikCurve, CtrlNum) #制作方案待定。。。。。
+        
 
         #复制曲线制作hair动力学系统
-        DynCurve = cmds.duplicate(inputCurve)
+        DynCurve = cmds.duplicate(inputCurve, name = inputCurve + '_DynCurve')
         DynObjects = self.CreatDynSys(DynCurve)
 
         #复制曲线制作非线性变形器效果
@@ -52,6 +53,10 @@ class TentacleAutoRig(object):
         deformCtrlGrp = deformGrps[0]
         deformHandleGrp = deformGrps[1]
 
+
+        #根据inputCurve去创建ik控制器，并返回ik控制器控制的曲线，会用此曲线去与inputCurve做blendshape
+
+        ikCtrlCurve = self.CreakIkCtrl(IKJntChain, inputCurve, CtrlNum) 
 
 
 
@@ -392,11 +397,8 @@ class TentacleAutoRig(object):
         
 
     def CreatDynSys(self, dynCurve):
-        #因为无法之间获取创建动力学曲线后生成的曲线毛囊等物件
-        #所以，此方法主要处理生成物件的命名与大组；
-        #然后获得动力学输出曲线，和解算器（用于链接开关）
         
-        ## test 手动创建节点并链接
+        ## test 手动创建动力学相关节点并链接，返回解算器用于控制器链接开关
 
         orgCurve = cmds.duplicate(dynCurve, rr = True, name = dynCurve + '_start')
         orgCurveShape = cmds.listRelatives(orgCurve, s = True)[0]
@@ -434,8 +436,101 @@ class TentacleAutoRig(object):
 
     
     
-    def CreakIkCtrl(self, JntChain, inputCurve, ikCtrlNum):
+    def CreakIkCtrl(self, inputCurve, fkCtrlNum):
         #给曲线创建簇控制点，并为簇点创建控制器
-        #蒙皮骨骼约束ik控制器，使其能跟随运动
-        #控制器的位置，需要从根部到尾部逐渐变密集 ？？？ 能否实现
-        pass
+        ##### 一个cv点对应一个簇并且簇点密集度有增加，因此需要处理两个问题：
+        #         1.根据需求的控制器数重建曲线的CV点，
+        #         2.根据控制器数删除CV点
+        #####处理控制器位置问题：
+        #         1.跟随（使用pointOnCurve）
+        #         2.去除双重控制（父层级上减掉多的运动）
+        #####返回需要用于与原曲线做blendshape的曲线
+
+        #根据设置的控制器数量计算所需的ik控制器数 
+        # cvNum = fkCtrlNum
+        # if fkCtrlNum <= 4:
+        #     cvNum = (fkCtrlNum - 1) * 2
+        #     cmds.delete(CCurve+ ".cv[1]", CCurve+ ".cv["+ str(cvNum + 1) + "]")
+        #     for i in range(0,cvNum):
+        #         cmds.cluster( 'curve4.cv[4]', rel=True )
+        # elif 4 < fkCtrlNum <= 10:
+        #     cvNum = (fkCtrlNum-1) * 3
+        # elif 10 < fkCtrlNum :
+        #     cvNum = (fkCtrlNum - 1) * 4 
+        # else:
+        #     print ("错误")
+        
+        cvNum = fkCtrlNum * 2 - 1
+        outputCurve = cmds.duplicate(inputCurve, name = inputCurve + '_ikCtrlCurve')[0]
+        CCurve = cmds.duplicate(inputCurve, name = outputCurve + '_CC')[0]
+        CCurve = cmds.rebuildCurve(CCurve, d = 3, s = cvNum - 1)[0]
+
+        cHnadleGrp = cmds.group(name = CCurve + '_cHandle', empty = True, world = True)
+        IKCtrlGrp = cmds.group(name = inputCurve + '_ikCtrlGrp', empty = True, world = True)
+        pocLocGrps = cmds.group(name = inputCurve + "_pocGrp", empty = True, world = True)
+        
+        pocLocs = []
+        for i in range(0,cvNum):
+            poc = cmds.pointOnCurve(inputCurve, ch = True)
+            poc = cmds.rename(poc, inputCurve + "_poc" + str(i))
+            if cvNum > 1:
+                Pos = (1.0/(cvNum - 1)) * i
+            else:
+                Pos = (1.0/cvNum) * i
+            cmds.setAttr(poc + ".parameter", Pos)
+            pocLoc = cmds.spaceLocator(p = (0,0,0), n = poc + "_loc")[0]
+            pocLocGrp = cmds.group(pocLoc, n = pocLoc + "Offset")
+            cmds.parent(pocLocGrp, pocLocGrps)
+            cmds.connectAttr(poc + ".result.position", pocLocGrp + ".translate")
+            pocLocs.append(pocLoc)
+
+
+        
+        for i in range(1, cvNum + 1):
+            if  i == 1:
+                CHandle = cmds.cluster( CCurve + '.cv[0]', CCurve + '.cv[1]', rel=True )
+            elif i == cvNum:
+                CHandle = cmds.cluster( CCurve + '.cv[' + str(i) + ']', CCurve + '.cv[' + str(i + 1) + ']', rel=True )
+            else:
+                CHandle = cmds.cluster( CCurve + '.cv[' + str(i) + ']', rel=True )
+            cmds.parent(CHandle, cHnadleGrp)
+
+            #给簇创建控制器，并且整理属性
+            IKCtrl = cmds.circle( name = ( inputCurve + '_ikCtrl' + str(i)), c=(0,0,0), nr=(1,0,0), sw=360, r=1.5, d=3, ut=0, tol=0.01, s=8, ch=False)[0]
+            cmds.setAttr(IKCtrl + ".rotateX", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(IKCtrl + ".rotateY", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(IKCtrl + ".rotateZ", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(IKCtrl + ".scaleZ", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(IKCtrl + ".scaleY", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(IKCtrl + ".scaleX", lock = True, keyable = False, channelBox = False)
+            #给控制器打组，并且约束簇
+            offsetGrp = cmds.group(IKCtrl, n = IKCtrl + "_Offset")
+            self.Align(offsetGrp, CHandle)
+            followGrp = cmds.group(IKCtrl, n = IKCtrl + "_follow")
+            #通过pointOnCurve以及表达式控制ik控制器的位置
+            cmds.pointConstraint(pocLocs[i-1], offsetGrp, mo = False)
+            #减掉双倍位移
+            ikCtrMul = cmds.shadingNode( 'multiplyDivide', asUtility = True, n = IKCtrl + "_mult" )
+            cmds.connectAttr(IKCtrl + ".translate", ikCtrMul + ".input1")
+            cmds.setAttr(ikCtrMul + ".input2", -1,-1,-1,type = "float3")
+            cmds.connectAttr(ikCtrMul + ".output", followGrp + ".translate")
+            
+
+            cmds.pointConstraint(IKCtrl, CHandle, mo = True)
+            cmds.parent(offsetGrp, IKCtrlGrp)
+            
+        #用cc曲线包裹输出的ik曲线
+        wireNode = cmds.wire(outputCurve, w = CCurve, name = "ikCtrlWire")[0]
+        cmds.setAttr(wireNode + ".dropoffDistance[0]", 99999999)
+
+        return outputCurve
+        
+
+
+
+
+
+
+
+
+        

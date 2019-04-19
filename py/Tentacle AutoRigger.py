@@ -25,7 +25,7 @@ class TentacleAutoRig(object):
         skinJntChain = self.CreatJntChain(inputCurve, JntNUm)
 
         #创建定位用的面片并蒙皮
-        guideSurface = self.CreatGuideSurface(inputCurve, skinJntChain)
+        guideSurface = self.CreatGuideSurface(inputCurve, skinJntChain)[0]
         cmds.skinCluster( guideSurface, skinJntChain, tsb=True, skinMethod = 0, maximumInfluences = 1, dropoffRate = 10.0 )
 
         #给骨骼添加位置属性,标识在面片上的位置
@@ -34,11 +34,11 @@ class TentacleAutoRig(object):
      
 
         #复制曲线制作hair动力学系统
-        DynCurve = cmds.duplicate(inputCurve, name = inputCurve + '_DynCurve')
-        DynObjects = self.CreatDynSys(DynCurve)
+        DynCurve = cmds.duplicate(inputCurve, name = inputCurve + '_DynCurve')[0]
+        DynNucleus = self.CreatDynSys(DynCurve)
 
         #复制曲线制作非线性变形器效果
-        deformCurve = cmds.duplicate(inputCurve, name = inputCurve + '_deformCurve')
+        deformCurve = cmds.duplicate(inputCurve, name = inputCurve + '_deformCurve')[0]
         deformGrps = self.CreatDeform(deformCurve,skinJntChain[0])
         deformCtrlGrp = deformGrps[0]
         deformHandleGrp = deformGrps[1]
@@ -51,7 +51,7 @@ class TentacleAutoRig(object):
 
         #使用inputCurve曲线给骨骼链做ik链，并通过约束将运动传递到ikTfkjnt
         IKJntChain = cmds.duplicate(skinJntChain, name = inputCurve + '_ikJnt', parentOnly = True)
-        ikSolvers = cmds.ikHandle(name=IKJntChain + '_IKHandle', sj=IKJntChain[0], ee=IKJntChain[JntNUm - 1], curve = inputCurve, sol='ikSplineSolver',ccv = False)
+        ikSolvers = cmds.ikHandle(name=inputCurve + '_ikJnt_IKHandle', sj=IKJntChain[0], ee=IKJntChain[JntNUm - 1], curve = inputCurve, sol='ikSplineSolver',ccv = False)
         ikBS = cmds.blendShape(ikCtrlCurve, deformCurve, DynCurve, inputCurve)
 
         ikTfkJnt = cmds.duplicate(skinJntChain, name = inputCurve + '_ikTfkJnt', parentOnly = True)
@@ -59,9 +59,9 @@ class TentacleAutoRig(object):
             cmds.parentConstraint(IKJntChain[i], ikTfkJnt[i], mo = True)
         
         
-        #创建主控制器   ！！！！添加特色控制的相关属性！！！
+        #创建主控制器   ！！！！添加控制的相关属性！！！
         mainCtrl = cmds.curve( name="MainCtrl", d = 1, p = [(-1,1,1),(1,1,1),(1,1,-1),(-1,1,-1),(-1,1,1),(-1,-1,1),(-1,-1,-1),(1,-1,-1),(1,-1,1),(-1,-1,1),(1,-1,1),(1,1,1),(1,1,-1),(1,-1,-1),(-1,-1,-1),(-1,1,-1)])
-        mainCtrlShape = cmds.listRelatives(mainCtrl, s = True)
+        mainCtrlShape = cmds.listRelatives(mainCtrl, s = True)[0]
         cmds.setAttr(mainCtrlShape + ".overrideEnabled", True)
         cmds.setAttr(mainCtrlShape + ".overrideColor", 17)
         mainCtrlGrp = cmds.group(mainCtrl, name = mainCtrl + "_offset")
@@ -70,22 +70,76 @@ class TentacleAutoRig(object):
 
         #整理层级
         #####模型组
-        geoGrp = cmds.cmds.group( name = inputCurve + '_geoGrp', empty = True, world = True)
+        geoGrp = cmds.group( name = inputCurve + '_geoGrp', empty = True, world = True)
         #####控制器组-----ik， fk控制器； input曲线，jnt组
-        ctrlGrp = cmds.cmds.group( name = inputCurve + '_ctrlGrp', empty = True, world = True)
+        ctrlGrp = cmds.group( name = inputCurve + '_ctrlGrp', empty = True, world = True)
         FKCtrlGrp = cmds.listRelatives(varFKCtrl, fullPath = True)[0].split("|", 3)[1]
-        jntGrp = cmds.group(skinJntChain,ikTfkJnt, IKJntChain, name = "jntGrp")
+        jntGrp = cmds.group(skinJntChain[0],ikTfkJnt[0], IKJntChain[0], name = "jntGrp")
         cmds.parent(FKCtrlGrp, ikCtrlSys[1], deformCtrlGrp, inputCurve, mainCtrlGrp, jntGrp, ctrlGrp)
         #####其他组
-        OtherGrp = cmds.cmds.group( name = inputCurve + '_otherGrp', empty = True, world = True)
-        DynGrp = cmds.listRelatives(DynObjects, fullPath = True)[0].split("|", 3)[1]
+        OtherGrp = cmds.group( name = inputCurve + '_otherGrp', empty = True, world = True)
+        DynGrp = cmds.listRelatives(DynNucleus, parent = True)[0]
         ikSysGrp = cmds.listRelatives(ikCtrlCurve, fullPath = True)[0].split("|", 3)[1]
 
-        cmds.parent(DynGrp, deformHandleGrp, guideSurface, ikSysGrp, OtherGrp)
+        cmds.parent(DynGrp, deformHandleGrp, guideSurface, ikSysGrp, deformCurve, DynCurve, ikSolvers, OtherGrp)
         ########总层级
-        allGrp = cmds.cmds.group(geoGrp, ctrlGrp, OtherGrp, name = inputCurve + '_allGrp', world = True)
+        allGrp = cmds.group(geoGrp, ctrlGrp, OtherGrp, name = inputCurve + '_allGrp', world = True)
 
+        
+        ##global scale
+        offsetLoc = cmds.spaceLocator( n = inputCurve + '_ctrl_offsetLoc')[0]
+        cmds.setAttr(offsetLoc + ".inheritsTransform", 0)
+        cmds.setAttr(offsetLoc + ".visibility", 0)
+        locGrp = cmds.group(offsetLoc, name = offsetLoc + "_grp")
+        self.Align(locGrp, mainCtrl)
+        cmds.parent(locGrp, mainCtrl)
+        cmds.parentConstraint( mainCtrl, offsetLoc, maintainOffset = True)
+        cmds.scaleConstraint( mainCtrl, offsetLoc, maintainOffset = True)
+        for i in varFKCtrl:
+            follow = cmds.listRelatives(i, parent = True)[0]
+            cmds.connectAttr(offsetLoc + ".rotate", follow + ".rotate")
+            cmds.connectAttr(offsetLoc + ".scale", follow + ".scale")
+
+        
         ######使用节点控制蒙皮骨骼的盘起等特殊功能
+        for jnt in skinJntChain:
+            rotateMultipliers = []
+            # create a layered texture node and strength multiplier for every joint to multiply all scale values
+            scaleMultiplier = cmds.shadingNode( 'layeredTexture', asUtility = True, n = 'util_' + jnt + '_scaleInput' )
+            
+            i = 0
+            for ctrl in varFKCtrl:
+                rotateMultiplier = self.create_ctrlOutput(ctrl, jnt)
+                rotateMultipliers.append(rotateMultiplier)
+                #链接ctrl的scale 到 scale multiplier
+                cmds.connectAttr( ctrl + '.scale', scaleMultiplier + '.inputs[' + str(i) + '].color' )
+                cmds.setAttr( scaleMultiplier + '.inputs[' + str(i) + '].blendMode', 6 )
+                
+                # get remapDistance outValue and connect to scale multiplier input[i] alpha
+                remapDist = cmds.listConnections( rotateMultiplier , type = 'remapValue' )[0]
+                cmds.connectAttr( remapDist + '.outValue', scaleMultiplier + '.inputs[' + str(i) + '].alpha' )
+                
+                i += 1
+        
+            # sum up rotate outputs of all controls and connect to joints
+            # connect to sum +-avg node
+            sum = cmds.shadingNode( 'plusMinusAverage', asUtility = True, n = 'util_' + jnt + '_sum_rotate' )	
+            for i in range( len(rotateMultipliers ) ):
+                cmds.connectAttr(rotateMultipliers[i] + ".output", sum + ".input3D[" + str(i) + "]")
+            cmds.connectAttr( sum + '.output3D', jnt + '.rotate' )
+            
+
+            # set last input to base value of 1, OOP methods does not work on sub attributes of layeredTexture
+            i += 1
+            cmds.setAttr( scaleMultiplier + '.inputs[' + str(i) + '].color', 1,1,1,type = "float3" )
+            cmds.setAttr( scaleMultiplier + '.inputs[' + str(i) + '].alpha', 1)
+            cmds.setAttr( scaleMultiplier + '.inputs[' + str(i) + '].blendMode', 0 )
+            
+            
+            # connect scale multiplier to joint scale YZ
+            cmds.connectAttr(scaleMultiplier + ".outColor", jnt + ".scale")
+
+
 
 
         # curves = cmds.duplicate(inputCurve, 2) #把曲线复制出3份出来，分别用于ik控制器，非线性变形器，头发动力学系统
@@ -162,6 +216,7 @@ class TentacleAutoRig(object):
 
         print('created and oriented Jnt Chain')
         cmds.select(JntChain[0])
+        cmds.delete(loc)
 
         return JntChain
 
@@ -233,11 +288,13 @@ class TentacleAutoRig(object):
             cmds.addAttr( longName='radius', attributeType='float', keyable=True, min=0.0001, defaultValue=0.3 )
 
             #创建毛囊
-            currentFollicle = self.create_follicle(surf[0], uPos=FolliclePos, vPos=0.5)
+            currentFollicle = self.create_follicle(surf, uPos=FolliclePos, vPos=0.5)
             cmds.setAttr(currentFollicle + ".simulationMethod", 0)
             cmds.setAttr(currentFollicle + ".collide", 0)
             cmds.setAttr(currentFollicle + ".flipDirection", True)
             currentFollicleTran = cmds.listRelatives(currentFollicle, parent = True)[0]
+
+            cmds.parent(currentFollicle, ctrlGrp)
 
             #设置旋转强度属性
             rotStrengthMul = cmds.shadingNode( 'multiplyDivide', asUtility = True, n = str( currentCtrl[0] ) + "_strength_mult" )
@@ -254,10 +311,10 @@ class TentacleAutoRig(object):
             cmds.connectAttr(jntPosPlus + '.output1D', currentFollicle + ".parameterU", f=True )
 
             #给控制器设置层级
-            offsetGrp = cmds.group(em = True, n = currentCtrl + "_Offset")
-            self.Align(offsetGrp, currentCtrl)
-            cmds.parent(currentCtrl, offsetGrp)
-            followGrp = cmds.group(currentCtrl, n = currentCtrl + "_follow")
+            offsetGrp = cmds.group(em = True, n = currentCtrl[0] + "_Offset")
+            self.Align(offsetGrp, currentCtrl[0])
+            cmds.parent(currentCtrl[0], offsetGrp)
+            followGrp = cmds.group(currentCtrl[0], n = currentCtrl[0] + "_follow")
 
             cmds.connectAttr(currentFollicleTran + ".translate", followGrp + ".translate")
             cmds.parent(offsetGrp, ctrlGrp)
@@ -267,6 +324,49 @@ class TentacleAutoRig(object):
 
         return listOfCtrls
 
+    def create_ctrlOutput(self, ctrl, jnt):
+        prefix = "util_" + ctrl + "_" + jnt + "_"
+        jntposMinusCtrlpos = cmds.shadingNode('plusMinusAverage', asUtility = True, n=prefix + 'jntpos-Ctrlpos')
+        cmds.setAttr(jntposMinusCtrlpos + ".operation", 2)
+        absPower = cmds.shadingNode('multiplyDivide', asUtility = True, n=prefix + 'absPower')
+        cmds.setAttr(absPower + ".input2", 2,2,2, type='double3')
+        cmds.setAttr(absPower + ".operation", 3)
+        absSqrt = cmds.shadingNode('multiplyDivide', asUtility = True, n=prefix + 'absSqrt')
+        cmds.setAttr(absSqrt + '.input2', .5,.5,.5, type='double3')
+        cmds.setAttr(absSqrt + '.operation', 3)
+        remapDist = cmds.shadingNode('remapValue', asUtility = True, n=prefix + 'remapDist')
+        rotateMultiplier = cmds.shadingNode('multiplyDivide', asUtility = True, n = prefix + 'infl_mult')
+        
+        # get existing offset nodes which were created in controller function
+        jntposZeroCompensate = cmds.listConnections( ctrl, exactType = True, type = 'plusMinusAverage' )[0]
+        rotateStrengthMultiplier = cmds.listConnections( ctrl, exactType = True, type = 'multiplyDivide' )[0]
+        
+        # jntpos - ctrlpos
+        cmds.connectAttr(jnt + '.jointPosition', jntposMinusCtrlpos + '.input1D[0]', f=1)
+        cmds.connectAttr(jntposZeroCompensate + '.output1D', jntposMinusCtrlpos + '.input1D[1]', f=1)
+        
+        # abs
+        cmds.connectAttr(jntposMinusCtrlpos + '.output1D', absPower + '.input1X', f=1)
+        cmds.connectAttr(absPower + '.outputX', absSqrt + '.input1X', f=1)
+        
+        # rotate remap: distance 0 to 1 | falloff distance to 0
+        cmds.connectAttr(absSqrt + '.outputX', remapDist + '.inputValue', f=1)
+        cmds.connectAttr(ctrl + '.radius', remapDist + '.value[1].value_Position', f=1)
+        cmds.setAttr(remapDist + '.value[0].value_Position', 0)
+        cmds.setAttr(remapDist + '.value[0].value_FloatValue', 1)
+        cmds.setAttr(remapDist + '.value[1].value_FloatValue', 0)
+        cmds.setAttr(remapDist + '.value[0].value_Interp', 2)
+        
+        # connect strength multiplier to rotate multiplier
+        cmds.connectAttr(rotateStrengthMultiplier + ".output", rotateMultiplier + ".input1")
+        cmds.connectAttr(remapDist + '.outValue', rotateMultiplier + '.input2X', f=1)
+        cmds.connectAttr(remapDist + '.outValue', rotateMultiplier + '.input2Y', f=1)
+        cmds.connectAttr(remapDist + '.outValue', rotateMultiplier + '.input2Z', f=1)
+        
+        # print('Created ' + ctrl + '--' + jnt + ' output.')
+        return rotateMultiplier
+
+        
 
     def Align(self, current, target):
         #current：当前的位置，target：要对齐的目标位置
@@ -278,7 +378,7 @@ class TentacleAutoRig(object):
 
     def create_follicle(self, nurbs, uPos, vPos):
         if cmds.objectType( nurbs, isType='transform' ):
-            nurbs = cmds.listRelatives(nurbs, s = True)
+            nurbs = cmds.listRelatives(nurbs, s = True)[0]
         elif cmds.objectType( nurbs, isType='nurbsSurface'):
             pass
         else:
@@ -300,7 +400,6 @@ class TentacleAutoRig(object):
 
         return follicleNode
 
-
     def CreatDeform(self, dynCurve, jnt):
         
         deformGrps = []
@@ -309,7 +408,8 @@ class TentacleAutoRig(object):
 
         sineDefs = cmds.nonLinear(dynCurve, type='sine', name = dynCurve + "_sine" )
         squashDefs = cmds.nonLinear(dynCurve, type='squash', lowBound = -2, highBound = 0, name = dynCurve + "_squash" )
-        self.Align(squashDefs[1], jnt)
+        targetPos = cmds.xform(jnt, q=True, ws=True, t=True)
+        cmds.xform(squashDefs[1], ws=True, t=[targetPos[0],targetPos[1],targetPos[2]])
 
         #创建变形器的控制器，整理并添加属性，并链接属性
         deformCtrl = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_demform_ctrl")[0]
@@ -327,7 +427,7 @@ class TentacleAutoRig(object):
         cmds.addAttr( longName='deform_switch', attributeType='float', keyable=True, min=0, max=1 )
         cmds.addAttr( longName='amplitude', attributeType='float', keyable=True, min=-20, max=20, defaultValue = 1 )
         cmds.addAttr( longName='wavelength', attributeType='float', keyable=True, min=1, max =10 , defaultValue = 5)
-        cmds.addAttr( longName='offset', attributeType='float', keyable=True, min=-10, max=10)
+        cmds.addAttr( longName='offset', attributeType='float', keyable=True, min=-100, max=100)
         cmds.addAttr( longName='dropoff', attributeType='float', keyable=True, min=-10, max=10, defaultValue = 10)
 
         cmds.addAttr( longName='factor', attributeType='float', keyable=True, min=-20, max=20 )
@@ -345,18 +445,18 @@ class TentacleAutoRig(object):
         cmds.setAttr(offsetGrp + ".translateY", tranY + 5)
 
         #修改handle的旋转方向，使其能和曲线同向，+1--->-1
-        jntOri = cmds.getAttr(jnt + ".jointOrientY")
+        jntOri = round(cmds.getAttr(jnt + ".jointOrientY"))
         o = abs(jntOri)%360 /90 
         if o == 0 :
             cmds.setAttr(sineDefs[1] + ".rotateZ", 90)
             cmds.setAttr(squashDefs[1] + ".rotateZ", 90)
-        elif 0 == 1 :
+        elif o == 1 :
             cmds.setAttr(sineDefs[1] + ".rotateX", -90)
             cmds.setAttr(squashDefs[1] + ".rotateX", -90)
-        elif 0 == 2 :
+        elif o == 2 :
             cmds.setAttr(sineDefs[1] + ".rotateZ", -90)
             cmds.setAttr(squashDefs[1] + ".rotateZ", -90)
-        elif 0 == 3 :
+        elif o == 3 :
             cmds.setAttr(sineDefs[1] + ".rotateX", 90)
             cmds.setAttr(squashDefs[1] + ".rotateX", 90)
         
@@ -422,29 +522,27 @@ class TentacleAutoRig(object):
         return deformGrps
 
 
-    
-        
-
     def CreatDynSys(self, dynCurve):
         
         ## test 手动创建动力学相关节点并链接，返回解算器用于控制器链接开关
 
         orgCurve = cmds.duplicate(dynCurve, rr = True, name = dynCurve + '_start')
+        outCurve = cmds.duplicate(dynCurve, rr = True, name = dynCurve + '_out')
         orgCurveShape = cmds.listRelatives(orgCurve, s = True)[0]
-        dynCurveShape = cmds.listRelatives(dynCurve, s = True)[0]
+        outCurveShape = cmds.listRelatives(outCurve, s = True)[0]
 
-        rebuildNode = cmds.createNode('rebuildCurve', name=orgCurveShape + "_rebuild")
+        # rebuildNode = cmds.createNode('rebuildCurve', name=orgCurveShape + "_rebuild")
 
-        cmds.connectAttr(orgCurveShape + ".worldSpace[0]", rebuildNode + ".inputCurve")
+        # cmds.connectAttr(orgCurveShape + ".worldSpace[0]", rebuildNode + ".inputCurve")
 
-        newCurve = cmds.createNode('nurbsCurve', name=rebuildNode + "_rebuildCurveShape")
-        cmds.connectAttr(rebuildNode + ".outputCurve", newCurve + ".create")
+        # newCurve = cmds.createNode('nurbsCurve', name=rebuildNode + "_rebuildCurveShape")
+        # cmds.connectAttr(rebuildNode + ".outputCurve", orgCurveShape + ".create")
 
 
         follicleNode = cmds.createNode('follicle', name=dynCurve + "_follicle")
-        cmds.connectAttr( newCurve + ".local", follicleNode + ".startPosition")
+        cmds.connectAttr( orgCurveShape + ".local", follicleNode + ".startPosition")
         cmds.connectAttr( orgCurve[0] + ".worldMatrix[0]", follicleNode + ".startPositionMatrix")
-        cmds.connectAttr( follicleNode + ".outCurve", dynCurveShape + ".create")
+        cmds.connectAttr( follicleNode + ".outCurve", outCurveShape + ".create")
 
         hairSystemNode = cmds.createNode('hairSystem', name=dynCurve + "_hairSystem")
         cmds.connectAttr( follicleNode + ".outHair", hairSystemNode + ".inputHair[0]")
@@ -459,11 +557,12 @@ class TentacleAutoRig(object):
         cmds.connectAttr("time1.outTime", hairSystemNode + ".currentTime")
         cmds.connectAttr("time1.outTime", nucleusNode + ".currentTime")
 
-        DynGrp = cmds.group(orgCurve, newCurve, follicleNode, hairSystemNode, nucleusNode, name = dynCurve + "_DynGrp")
+
+        DynGrp = cmds.group(orgCurve, outCurve, follicleNode, hairSystemNode, nucleusNode, name = dynCurve + "_DynGrp")
+        cmds.wire(dynCurve, w = outCurve, name = "ikDynWire")[0]
 
         return nucleusNode
 
-    
     
     def CreakIkCtrl(self, inputCurve, fkCtrlNum):
         #给曲线创建簇控制点，并为簇点创建控制器
@@ -502,7 +601,7 @@ class TentacleAutoRig(object):
         
         pocLocs = []
         for i in range(0,cvNum):
-            poc = cmds.pointOnCurve(inputCurve, ch = True)
+            poc = cmds.pointOnCurve(inputCurve, ch = True, turnOnPercentage = True)
             poc = cmds.rename(poc, inputCurve + "_poc" + str(i))
             if cvNum > 1:
                 Pos = (1.0/(cvNum - 1)) * i
@@ -546,8 +645,7 @@ class TentacleAutoRig(object):
             cmds.setAttr(ikCtrMul + ".input2", -1,-1,-1,type = "float3")
             cmds.connectAttr(ikCtrMul + ".output", followGrp + ".translate")
             
-
-            cmds.pointConstraint(IKCtrl, CHandle, mo = True)
+            cmds.connectAttr(IKCtrl + ".translate", CHandle + ".translate")
             cmds.parent(offsetGrp, IKCtrlGrp)
             
         #用cc曲线包裹输出的ik曲线
@@ -559,11 +657,3 @@ class TentacleAutoRig(object):
         return outputCurve, IKCtrlGrp
         
 
-
-
-
-
-
-
-
-        

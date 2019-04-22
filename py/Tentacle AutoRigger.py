@@ -124,7 +124,11 @@ class TentacleAutoRig(object):
         #####控制器组-----ik， fk控制器； input曲线，jnt组
         ctrlGrp = cmds.group( name = inputCurve + '_ctrlGrp', empty = True, world = True)
         FKCtrlGrp = cmds.listRelatives(varFKCtrl, fullPath = True)[0].split("|", 3)[1]
-        jntGrp = cmds.group(skinJntChain[0],ikTfkJnt[0], IKJntChain[0], name = "jntGrp")
+        jntGrp = cmds.group(name = "jntGrp", empty = True, world = True)
+        self.Align(jntGrp, skinJntChain[0])
+        cmds.parent(skinJntChain[0],ikTfkJnt[0], IKJntChain[0], jntGrp)
+        self.Align(FKCtrlGrp, mainCtrl)
+        self.Align(ikCtrlSys[1], mainCtrl)
         cmds.parent(FKCtrlGrp, ikCtrlSys[1], deformCtrlGrp, inputCurve,jntGrp, mainCtrl, r = True)
         cmds.parent(mainCtrlGrp, ctrlGrp, r = True)
         #####其他组
@@ -179,7 +183,6 @@ class TentacleAutoRig(object):
                 cmds.connectAttr(rotateMultipliers[i] + ".output", sum + ".input3D[" + str(i) + "]")
             
             posNum = j - 1 - len(skinJntChain)
-            j = j+1
             self.creatRollFun(jnt, sum, mainCtrl, posNum)
             # cmds.connectAttr( sum + '.output3D', jnt + '.rotate' )
             
@@ -193,7 +196,9 @@ class TentacleAutoRig(object):
             
             # connect scale multiplier to joint scale YZ
             cmds.connectAttr(scaleMultiplier + ".outColor", jnt + ".scale")
-
+            #链接ik骨骼的控制到fk骨骼
+            cmds.pointConstraint(ikTfkJnt[j-1],jnt, mo = True)
+            j = j+1
 
 
         # curves = cmds.duplicate(inputCurve, 2) #把曲线复制出3份出来，分别用于ik控制器，非线性变形器，头发动力学系统
@@ -215,6 +220,10 @@ class TentacleAutoRig(object):
 
         # self.CreatVarFK(fkJnt, CtrlNum)
     def creatRollFun(self, jnt, pulsNode, mainCon, posNum):
+        ##通过计算设置骨骼的旋转值，使骨骼能够盘起，在旋转的yz轴向上实现
+        ## 1. 减去当前骨骼已有的旋转数值
+        ## 2. 选择Y和Z轴上的roll属性通过计算设置为 开关，clamp（0,1，value）
+        ## 3. 通过Y和Z轴上的 size和limit属性 计算旋转数值的大小
 
         RollSumRotateNode = cmds.shadingNode('plusMinusAverage', asUtility = True, name = jnt + '_RollSumRotate')
         cmds.connectAttr( pulsNode + '.output3D', RollSumRotateNode + '.input3D[0]')
@@ -285,7 +294,7 @@ class TentacleAutoRig(object):
         cmds.disconnectAttr(sdf, motionpath + '.uValue')
         for i in range(0,JntNum):
             cmds.select(cl = True)
-            cmds.setAttr(motionpath + '.uValue', i*1.0/JntNum)
+            cmds.setAttr(motionpath + '.uValue', i*1.0/(JntNum-1))
             pos = cmds.xform(loc[0], q = True, ws = True, piv = True)
             jnt = cmds.joint(p = (pos[0], pos[1], pos[2]), n = inputCurve + '_SKinJnt' + str(i))
             JntChain.append(jnt)
@@ -375,7 +384,7 @@ class TentacleAutoRig(object):
     
     def CreatVarFkCtrl(self, ctrName, num, surf, jnt):
         ctrlGrp = cmds.group( name = ctrName + '_VFkCtrls', empty = True, world = True)
-        self.Align(ctrlGrp, jnt)
+        # self.Align(ctrlGrp, jnt)
         cmds.setAttr(ctrlGrp + ".inheritsTransform ", 0)
         listOfCtrls = []
 
@@ -413,7 +422,7 @@ class TentacleAutoRig(object):
             cmds.setAttr(currentFollicle + ".flipDirection", True)
             currentFollicleTran = cmds.listRelatives(currentFollicle, parent = True)[0]
 
-            cmds.parent(currentFollicle, ctrlGrp)
+            cmds.parent(currentFollicle, ctrlGrp, r = True)
 
             #设置旋转强度属性
             rotStrengthMul = cmds.shadingNode( 'multiplyDivide', asUtility = True, n = str( currentCtrl[0] ) + "_strength_mult" )
@@ -495,7 +504,22 @@ class TentacleAutoRig(object):
         # print('Created ' + ctrl + '--' + jnt + ' output.')
         return rotateMultiplier
 
-        
+    # def creatBufGrp(self, sel):
+    #     Bufs = []
+    #     if sel:
+    #         for node in sel:
+    #             targerParent = cmds.listRelatives(node, p = True)
+    #             BufObj = cmds.group(em = True, name = node + 'buf')
+    #             if targerParent != []:
+    #                 cmds.parent(BufObj, targerParent)
+    #             srcPos = cmds.xform( node, q = True, t = True, ws = True )
+    #             srcRot = cmds.xform( node, q = True, ro = True, ws = True )
+    #             cmds.xform( BufObj, t = srcPos, ro = srcRot )
+    #             cmds.parent( node, BufObj )
+    #             Bufs.append( BufObj )
+    #         cmds.select(Bufs)
+    #         return Bufs
+                
 
     def Align(self, current, target):
         #current：当前的位置，target：要对齐的目标位置
@@ -542,7 +566,9 @@ class TentacleAutoRig(object):
 
         #创建变形器的控制器，整理并添加属性，并链接属性
         deformCtrl = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_demform_ctrl")[0]
-        posLoc = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_posLoc")[0]
+        # posLoc = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_posLoc")[0]
+        # posLocGrp = cmds.group(posLoc, name =posLoc + "_grp")
+        # self.Align(posLocGrp, sineDefs[1])
         
         cmds.transformLimits(deformCtrl, tx = (0,1), etx=(True, False))
         cmds.setAttr(deformCtrl + ".translateY", lock = True, keyable = False, channelBox = False)
@@ -555,16 +581,16 @@ class TentacleAutoRig(object):
         cmds.setAttr(deformCtrl + ".rotateZ", lock = True, keyable = False, channelBox = False)
 
         # cmds.addAttr( longName='deform_switch', attributeType='float', keyable=True, min=0, max=1 )
-        cmds.addAttr( longName='amplitude', attributeType='float', keyable=True, min=-20, max=20, defaultValue = 1 )
-        cmds.addAttr( longName='wavelength', attributeType='float', keyable=True, min=1, max =10 , defaultValue = 5)
-        cmds.addAttr( longName='offset', attributeType='float', keyable=True, min=-100, max=100)
-        cmds.addAttr( longName='dropoff', attributeType='float', keyable=True, min=-10, max=10, defaultValue = 10)
+        cmds.addAttr(deformCtrl, longName='amplitude', attributeType='float', keyable=True, min=-20, max=20, defaultValue = 1 )
+        cmds.addAttr(deformCtrl, longName='wavelength', attributeType='float', keyable=True, min=1, max =10 , defaultValue = 5)
+        cmds.addAttr(deformCtrl, longName='offset', attributeType='float', keyable=True, min=-100, max=100)
+        cmds.addAttr(deformCtrl, longName='dropoff', attributeType='float', keyable=True, min=-10, max=10, defaultValue = 10)
 
-        cmds.addAttr( longName='factor', attributeType='float', keyable=True, min=-20, max=20 )
-        cmds.addAttr( longName='expand', attributeType='float', keyable=True, min=0, max=10)
-        cmds.addAttr( longName='maxExpandPos', attributeType='float', keyable=True, min=0.1, max=9.9, defaultValue = 1)
-        cmds.addAttr( longName='startSmooth', attributeType='float', keyable=True, min=0, max=1 )
-        cmds.addAttr( longName='endSmooth', attributeType='float', keyable=True, min=0, max=1)
+        cmds.addAttr(deformCtrl, longName='factor', attributeType='float', keyable=True, min=-20, max=20 )
+        cmds.addAttr(deformCtrl, longName='expand', attributeType='float', keyable=True, min=0, max=10)
+        cmds.addAttr(deformCtrl, longName='maxExpandPos', attributeType='float', keyable=True, min=0.1, max=9.9, defaultValue = 1)
+        cmds.addAttr(deformCtrl, longName='startSmooth', attributeType='float', keyable=True, min=0, max=1 )
+        cmds.addAttr(deformCtrl, longName='endSmooth', attributeType='float', keyable=True, min=0, max=1)
 
 
         followGrp = cmds.group(deformCtrl, n = deformCtrl + "_follow")
@@ -643,9 +669,9 @@ class TentacleAutoRig(object):
         cmds.setAttr(sineRange + ".oldMaxZ", 10)
         cmds.connectAttr(sineRange + ".outValueZ", sineDefs[0] + ".dropoff" )
 
-        cmds.connectAttr(deformCtrl + ".translate",posLoc + ".translate")
+        # cmds.connectAttr(deformCtrl + ".translate",posLoc + ".translate")
         # cmds.pointConstraint(posLoc, squashDefs[1], mo = True)
-        cmds.pointConstraint(posLoc, sineDefs[1], mo = True)
+        cmds.pointConstraint(deformCtrl, sineDefs[1], mo = True)
 
         deformGrp = cmds.group(squashDefs[1],sineDefs[1], n = dynCurve + "deform_Grp")
         deformGrps.append(deformGrp)
@@ -758,7 +784,11 @@ class TentacleAutoRig(object):
             cmds.parent(CHandle, cHnadleGrp, r = True)
 
             #给簇创建控制器，并且整理属性
-            IKCtrl = cmds.circle( name = ( inputCurve + '_ikCtrl' + str(i)), c=(0,0,0), nr=(1,0,0), sw=360, r=1.5, d=3, ut=0, tol=0.01, s=8, ch=False)[0]
+            IKCtrl = cmds.curve(name = ( inputCurve + '_ikCtrl' + str(i)), d=1, p=[(0, 1, 0), (-1, 0, 0), (0, -1, 0), (1, 0, 0), (0, 1, 0), \
+                                                           (0, 0, -1), (0, -1, 0), (0, 0, 1), (0, 1, 0), (-1, 0, 0),\
+                                                           (0, 0, 1), (1, 0, 0), (0, 0, -1), (-1, 0, 0)], \
+                                       k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+            # IKCtrl = cmds.circle( name = ( inputCurve + '_ikCtrl' + str(i)), c=(0,0,0), nr=(1,0,0), sw=360, r=1.5, d=3, ut=0, tol=0.01, s=8, ch=False)[0]
             cmds.setAttr(IKCtrl + ".rotateX", lock = True, keyable = False, channelBox = False)
             cmds.setAttr(IKCtrl + ".rotateY", lock = True, keyable = False, channelBox = False)
             cmds.setAttr(IKCtrl + ".rotateZ", lock = True, keyable = False, channelBox = False)
@@ -770,6 +800,8 @@ class TentacleAutoRig(object):
             self.Align(offsetGrp, CHandle)
             followGrp = cmds.group(IKCtrl, n = IKCtrl + "_follow")
             #通过pointOnCurve以及表达式控制ik控制器的位置
+            targetPos = cmds.xform(follicles[i-1], q=True, ws=True, t=True)
+            cmds.xform(offsetGrp, ws=True, t=[targetPos[0],targetPos[1],targetPos[2]])
             cmds.parentConstraint(follicles[i-1], offsetGrp, mo = True)
             # cmds.pointConstraint(follicles[i-1], offsetGrp, mo = True)
             # cmds.orientConstraint(follicles[i-1], offsetGrp, mo = True)

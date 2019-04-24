@@ -15,11 +15,126 @@ class TentacleAutoRig(object):
 
     def __init__(self):
         object.__init__(self)
+        self.WINDOW_NAME = "TentacleAutoRig"
         # self.inputCurve =  cmds.ls(sl = True)
         # self.JntNUm = 10
 
-    
-    def BuildAutoRig(self, inputCurve, CtrlNum, JntNUm):
+    def UI(self):
+        if cmds.window(self.WINDOW_NAME, exists = True):
+            cmds.deleteUI(self.WINDOW_NAME,window = True)
+        
+        main_window = cmds.window(self.WINDOW_NAME, title =  "TentacleAutoRig", widthHeight=(365.0, 210.0), sizeable=False, minimizeButton=True, maximizeButton=False, rtf = True,  menuBar=True)
+        form = cmds.formLayout(numberOfDivisions=100, w = 365, h = 210)
+        # cmds.columnLayout(adj=1)
+        button_selCurve = cmds.button(label='>', w=35, h=25, command= self.SelectCurve )
+        cmds.formLayout( form, edit=True, attachForm=[( button_selCurve, 'top', 15), ( button_selCurve, 'left', 40)] )
+	
+        input_inputCurve = cmds.textField('input_inputCurve', text='Draw a curve, 1 Joint per CV.', w=250, h=25)
+        cmds.formLayout( form, edit=True, attachForm=[( input_inputCurve, 'top', 15), ( input_inputCurve, 'left', 85)] )
+
+        # Creating Element text_IdName
+        text_IdName = cmds.text( label='Prefix Name:', align='right', recomputeSize=True, w=80, h=25)
+        cmds.formLayout( form, edit=True, attachForm=[( text_IdName, 'top', 50), ( text_IdName, 'left', 10)] )
+        # =========================================
+        # Creating Element input_IdName
+        input_IdName = cmds.textField('input_IdName', text='Tentacle', w=250, h=25)
+        cmds.formLayout( form, edit=True, attachForm=[( input_IdName, 'top', 50), ( input_IdName, 'left', 100)] )
+
+        # =========================================	
+        # Creating Element text_numOfCtrls
+        text_numOfCtrls = cmds.text( label='# of Controls:', align='right', recomputeSize=True, w=80, h=25)
+        cmds.formLayout( form, edit=True, attachForm=[( text_numOfCtrls, 'top', 85), ( text_numOfCtrls, 'left', 10)] )
+
+        # =========================================
+        # Creating Element slider_numOfCtrls
+        slider_numOfCtrls = cmds.intSliderGrp('slider_numOfCtrls', f=True, min=1, max=10, fieldMinValue=1,fieldMaxValue=999, value=3, ann='Number of Controls', w=255, h=25)
+        cmds.formLayout( form, edit=True, attachForm=[( slider_numOfCtrls, 'top', 85), ( slider_numOfCtrls, 'left', 100)] )
+        # =========================================	
+        # Creating Element text_numOfCtrls
+        text_numOfJnt = cmds.text( label='# jnt Number:', align='right', recomputeSize=True, w=80, h=25)
+        cmds.formLayout( form, edit=True, attachForm=[( text_numOfJnt, 'top', 120), ( text_numOfJnt, 'left', 10)] )
+        # =========================================
+        # Creating Element slider_numOfCtrls
+        slider_numOfJnt = cmds.intSliderGrp('slider_numOfJnt', f=True, min=1, max=100, fieldMinValue=1,fieldMaxValue=999, value=10, ann='Number of Controls', w=255, h=25)
+        cmds.formLayout( form, edit=True, attachForm=[( slider_numOfJnt, 'top', 120), ( slider_numOfJnt, 'left', 100)] )
+        # =========================================
+        # Creating Element button_build
+        button_build = cmds.button( label='Build', w=340, h=40, command = self.BuildAutoRigFromUI)
+        cmds.formLayout( form, edit=True, attachForm=[( button_build, 'top', 160), ( button_build, 'left', 10)] )
+        # =========================================
+
+        cmds.showWindow(main_window)
+    # UI functions
+    def SelectCurve(self, *args):
+        sel =cmds.ls(sl = True)
+        if len(sel) > 0:
+            cmds.textField('input_inputCurve', edit = True, text = sel[0])
+        else: 
+            cmds.textField('input_inputCurve', edit = True, text = 'Draw a curve, 1 Joint per CV.')
+            cmds.warning('Nothing is selected.')
+
+    def BuildAutoRigFromUI(self, *args):
+        # get inputs from UI
+        inputCurve = cmds.textField('input_inputCurve', query = True, text = True)
+        IdName = cmds.textField('input_IdName', query = True, text = True)
+        numberOfCtrls = cmds.intSliderGrp('slider_numOfCtrls', query = True, value = True)
+        numberOfJnts = cmds.intSliderGrp('slider_numOfJnt', query = True, value = True)
+
+        # check if input string is empty, default string or not existent
+        if (inputCurve == '' or inputCurve == 'Draw a curve, 1 Joint per CV.'):
+            cmds.warning('You have to enter a curve. Select it and press the ">" button.')
+            return
+        
+        # check if input object exists
+        if (cmds.objExists(inputCurve) != True):
+            cmds.warning(str(inputCurve) + ' does not exist. You have to enter a curve. Select it and press the ">" button.')
+            return
+        
+        # continue if input is a transform with a nurbs curve shape, abort if not.
+        if cmds.nodeType(inputCurve) == 'transform':
+            if cmds.nodeType(cmds.listRelatives(inputCurve, shapes=True)[0]) == 'nurbsCurve':
+                print('Curve is valid. Continuing...')
+            else: 
+                cmds.warning('Selected Transform is invalid. Please select Curve.')
+                return
+        else: 
+            cmds.warning('Selected Object is invalid. Please select Curve (Transform).')
+            return
+        
+        # workaround to get rid of unwanted characters by using maya's build in char check
+        cmds.select(clear = True)
+        IdName = str( cmds.group( name = IdName, empty = True ) )
+        if (IdName[0] == "|"): IdName = IdName.split("|")[1]
+        cmds.delete()
+        
+        # check if rig with that IdName already exists and increment
+        while cmds.objExists(IdName):
+            cmds.warning('An object with the name ' + IdName + ' already exists.')
+            # get index from string
+            indexList = []
+            for c in IdName[::-1]:
+                if c.isdigit():
+                    indexList.append(c)
+                else:
+                    break
+            
+            indexList.reverse()
+            index = int("".join(indexList))
+            
+            # remove index from IdName
+            IdName = IdName[0:-int(len(str(index)))]
+            
+            # add new index to IdName
+            index += 1
+            IdName = IdName + str(index)
+            cmds.warning('New name is ' + IdName)
+            
+        self.BuildAutoRig(IdName, inputCurve, numberOfCtrls, numberOfJnts)
+        return
+
+
+    # Utility functions
+    def BuildAutoRig(self, IdName, inputCurve, CtrlNum, JntNUm):
 
         #根据曲线和设定的骨骼数创建骨骼
         skinJntChain = self.CreatJntChain(inputCurve, JntNUm)

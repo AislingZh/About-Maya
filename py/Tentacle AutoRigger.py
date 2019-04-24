@@ -127,9 +127,11 @@ class TentacleAutoRig(object):
         jntGrp = cmds.group(name = "jntGrp", empty = True, world = True)
         self.Align(jntGrp, skinJntChain[0])
         cmds.parent(skinJntChain[0],ikTfkJnt[0], IKJntChain[0], jntGrp)
+        cmds.setAttr(ikTfkJnt[0] + ".visibility", 0)
+        cmds.setAttr(IKJntChain[0] + ".visibility", 0)
         self.Align(FKCtrlGrp, mainCtrl)
         self.Align(ikCtrlSys[1], mainCtrl)
-        cmds.parent(FKCtrlGrp, ikCtrlSys[1], deformCtrlGrp, inputCurve,jntGrp, mainCtrl, r = True)
+        cmds.parent(FKCtrlGrp, ikCtrlSys[1], deformCtrlGrp, inputCurve,jntGrp, mainCtrl)
         cmds.parent(mainCtrlGrp, ctrlGrp, r = True)
         #####其他组
         OtherGrp = cmds.group( name = inputCurve + '_otherGrp', empty = True, world = True)
@@ -137,6 +139,7 @@ class TentacleAutoRig(object):
         ikSysGrp = cmds.listRelatives(ikCtrlCurve, fullPath = True)[0].split("|", 3)[1]
 
         cmds.parent(DynGrp, deformHandleGrp, guideSurface, ikSysGrp, deformCurve, DynCurve, ikSolvers[0], OtherGrp, r = True)
+        cmds.setAttr(OtherGrp + ".visibility", 0)
         ########总层级
         allGrp = cmds.group(geoGrp, ctrlGrp, OtherGrp, name = inputCurve + '_allGrp', world = True)
 
@@ -182,6 +185,7 @@ class TentacleAutoRig(object):
             for i in range( len(rotateMultipliers ) ):
                 cmds.connectAttr(rotateMultipliers[i] + ".output", sum + ".input3D[" + str(i) + "]")
             
+            cmds.connectAttr(ikTfkJnt[j-1] + ".rotate", sum + ".input3D[" + str(len(rotateMultipliers)) + "]")
             posNum = j - 1 - len(skinJntChain)
             self.creatRollFun(jnt, sum, mainCtrl, posNum)
             # cmds.connectAttr( sum + '.output3D', jnt + '.rotate' )
@@ -197,7 +201,8 @@ class TentacleAutoRig(object):
             # connect scale multiplier to joint scale YZ
             cmds.connectAttr(scaleMultiplier + ".outColor", jnt + ".scale")
             #链接ik骨骼的控制到fk骨骼
-            cmds.pointConstraint(ikTfkJnt[j-1],jnt, mo = True)
+            cmds.connectAttr(ikTfkJnt[j-1] + ".translate", jnt + ".translate")
+            #cmds.pointConstraint(ikTfkJnt[j-1],jnt, mo = True)
             j = j+1
 
 
@@ -566,9 +571,9 @@ class TentacleAutoRig(object):
 
         #创建变形器的控制器，整理并添加属性，并链接属性
         deformCtrl = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_demform_ctrl")[0]
-        # posLoc = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_posLoc")[0]
-        # posLocGrp = cmds.group(posLoc, name =posLoc + "_grp")
-        # self.Align(posLocGrp, sineDefs[1])
+        posLoc = cmds.spaceLocator(p = (0,0,0), n = jnt.split("_", 1)[0] + "_posLoc")[0]
+        posLocGrp = cmds.group(posLoc, name =posLoc + "_grp")
+        self.Align(posLocGrp, dynCurve)
         
         cmds.transformLimits(deformCtrl, tx = (0,1), etx=(True, False))
         cmds.setAttr(deformCtrl + ".translateY", lock = True, keyable = False, channelBox = False)
@@ -599,22 +604,27 @@ class TentacleAutoRig(object):
         self.Align(offsetGrp, jnt)
         tranY = cmds.getAttr(offsetGrp + ".translateY")
         cmds.setAttr(offsetGrp + ".translateY", tranY + 5)
-
-        #修改handle的旋转方向，使其能和曲线同向，+1--->-1
-        jntOri = round(cmds.getAttr(jnt + ".jointOrientY"))
-        o = abs(jntOri)%360 /90 
-        if o == 0 :
-            cmds.setAttr(sineDefs[1] + ".rotateZ", 90)
-            cmds.setAttr(squashDefs[1] + ".rotateZ", 90)
-        elif o == 1 :
-            cmds.setAttr(sineDefs[1] + ".rotateX", -90)
-            cmds.setAttr(squashDefs[1] + ".rotateX", -90)
-        elif o == 2 :
-            cmds.setAttr(sineDefs[1] + ".rotateZ", -90)
-            cmds.setAttr(squashDefs[1] + ".rotateZ", -90)
-        elif o == 3 :
-            cmds.setAttr(sineDefs[1] + ".rotateX", 90)
-            cmds.setAttr(squashDefs[1] + ".rotateX", 90)
+        jntOriZ = round(cmds.getAttr(jnt + ".jointOrientZ"))
+        
+        if abs(jntOriZ) !=90:
+            #修改handle的旋转方向，使其能和曲线同向，+1--->-1
+            jntOri = round(cmds.getAttr(jnt + ".jointOrientY"))
+            o = abs(jntOri)%360 /90 
+            if o == 0 :
+                cmds.setAttr(sineDefs[1] + ".rotateZ", 90)
+                cmds.setAttr(squashDefs[1] + ".rotateZ", 90)
+            elif o == 1 :
+                cmds.setAttr(sineDefs[1] + ".rotateX", -90)
+                cmds.setAttr(squashDefs[1] + ".rotateX", -90)
+            elif o == 2 :
+                cmds.setAttr(sineDefs[1] + ".rotateZ", -90)
+                cmds.setAttr(squashDefs[1] + ".rotateZ", -90)
+            elif o == 3 :
+                cmds.setAttr(sineDefs[1] + ".rotateX", 90)
+                cmds.setAttr(squashDefs[1] + ".rotateX", 90)
+        elif jntOriZ == 90:
+            cmds.setAttr(sineDefs[1] + ".rotateX", 180)
+            cmds.setAttr(squashDefs[1] + ".rotateX", 180)
         
         #链接控制器和变形器的属性
         squashRange = cmds.shadingNode("setRange", asUtility = True, name = sineDefs[0] + "_squash_setRange")
@@ -669,11 +679,11 @@ class TentacleAutoRig(object):
         cmds.setAttr(sineRange + ".oldMaxZ", 10)
         cmds.connectAttr(sineRange + ".outValueZ", sineDefs[0] + ".dropoff" )
 
-        # cmds.connectAttr(deformCtrl + ".translate",posLoc + ".translate")
+        cmds.connectAttr(deformCtrl + ".translate",posLoc + ".translate")
         # cmds.pointConstraint(posLoc, squashDefs[1], mo = True)
-        cmds.pointConstraint(deformCtrl, sineDefs[1], mo = True)
+        cmds.pointConstraint(posLoc, sineDefs[1], mo = True)
 
-        deformGrp = cmds.group(squashDefs[1],sineDefs[1], n = dynCurve + "deform_Grp")
+        deformGrp = cmds.group(squashDefs[1],sineDefs[1], posLocGrp, n = dynCurve + "deform_Grp")
         deformGrps.append(deformGrp)
 
         return deformGrps
@@ -795,6 +805,7 @@ class TentacleAutoRig(object):
             cmds.setAttr(IKCtrl + ".scaleZ", lock = True, keyable = False, channelBox = False)
             cmds.setAttr(IKCtrl + ".scaleY", lock = True, keyable = False, channelBox = False)
             cmds.setAttr(IKCtrl + ".scaleX", lock = True, keyable = False, channelBox = False)
+            cmds.setAttr(IKCtrl + ".visibility", lock = True, keyable = False, channelBox = False)
             #给控制器打组，并且约束簇
             offsetGrp = cmds.group(IKCtrl, n = IKCtrl + "_Offset")
             self.Align(offsetGrp, CHandle)
@@ -809,8 +820,8 @@ class TentacleAutoRig(object):
             ikCtrMul = cmds.shadingNode( 'multiplyDivide', asUtility = True, n = IKCtrl + "_mult" )
             cmds.connectAttr(IKCtrl + ".translate", ikCtrMul + ".input1")
             cmds.setAttr(ikCtrMul + ".input2", -1,-1,-1,type = "float3")
-            cmds.connectAttr(ikCtrMul + ".outputY", followGrp + ".translateY")
-            cmds.connectAttr(ikCtrMul + ".outputZ", followGrp + ".translateZ")
+            cmds.connectAttr(ikCtrMul + ".output", followGrp + ".translate")
+            # cmds.connectAttr(ikCtrMul + ".outputZ", followGrp + ".translateZ")
             
             cmds.connectAttr(IKCtrl + ".translate", CHandle[1] + ".translate")
             cmds.parent(offsetGrp, IKCtrlGrp, r = True)

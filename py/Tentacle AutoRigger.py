@@ -276,20 +276,24 @@ class TentacleAutoRig(object):
 
         
         ######使用节点控制蒙皮骨骼的盘起以及variableFK的功能
+        TranJntChain = cmds.duplicate(skinJntChain, name = IdName + '_tranJnt', parentOnly = True)
+        for i in range(len(skinJntChain)):
+            cmds.parent(TranJntChain[i], skinJntChain[i], r = True)
+
         j = 1
-        for jnt in skinJntChain:
+        for num in range(len(skinJntChain)):
             rotateMultipliers = []
-            # transMultipliers = []
+            transMultipliers = []
             # create a layered texture node and strength multiplier for every joint to multiply all scale values
             scaleMultiplier = cmds.shadingNode( 'layeredTexture', asUtility = True, n = 'util_' + jnt + '_scaleInput' )
             
             i = 0
             for ctrl in varFKCtrl:
-                rotateMultiplier = self.create_ctrlOutput(ctrl, jnt)
-                # rotateMultiplier = Multipliers[0]
-                # transMultiplier = Multipliers[1]
+                Multipliers = self.create_ctrlOutput(ctrl, skinJntChain[num])
+                rotateMultiplier = Multipliers[0]
+                transMultiplier = Multipliers[1]
                 rotateMultipliers.append(rotateMultiplier)
-                # transMultipliers.append(transMultiplier)
+                transMultipliers.append(transMultiplier)
                 #链接ctrl的scale 到 scale multiplier
                 cmds.connectAttr( ctrl + '.scale', scaleMultiplier + '.inputs[' + str(i) + '].color' )
                 cmds.setAttr( scaleMultiplier + '.inputs[' + str(i) + '].blendMode', 6 )
@@ -302,17 +306,17 @@ class TentacleAutoRig(object):
         
             # sum up rotate outputs of all controls and connect to joints
             # connect to sum +-avg node
-            rotSum = cmds.shadingNode( 'plusMinusAverage', asUtility = True, n = 'util_' + jnt + '_Sum_rotate' )	
-            # transSum = cmds.shadingNode( 'plusMinusAverage', asUtility = True, n = 'util_' + jnt + '_Sum_translate' )	
+            rotSum = cmds.shadingNode( 'plusMinusAverage', asUtility = True, n = 'util_' + skinJntChain[num] + '_Sum_rotate' )	
+            transSum = cmds.shadingNode( 'plusMinusAverage', asUtility = True, n = 'util_' + TranJntChain[num] + '_Sum_translate' )	
             for i in range( len(rotateMultipliers ) ):
                 cmds.connectAttr(rotateMultipliers[i] + ".output", rotSum + ".input3D[" + str(i) + "]")
-                # cmds.connectAttr(transMultipliers[i] + ".output", transSum + ".input3D[" + str(i) + "]")
+                cmds.connectAttr(transMultipliers[i] + ".output", transSum + ".input3D[" + str(i) + "]")
             
             cmds.connectAttr(ikTfkJnt[j-1] + ".rotate", rotSum + ".input3D[" + str(len(rotateMultipliers)) + "]")
-            # cmds.connectAttr(ikTfkJnt[j-1] + ".translate", transSum + ".input3D[" + str(len(transMultipliers)) + "]")
+            # cmds.connectAttr(ikTfkJnt[j-1] + ".translate", rotSum + ".input3D[" + str(len(rotateMultipliers)) + "]")
             posNum = j - 1 - len(skinJntChain)
-            self.creatRollFun(jnt, rotSum, mainCtrl, posNum)
-            # cmds.connectAttr( transSum + '.output3D', jnt + '.translate' )
+            self.creatRollFun(skinJntChain[num], rotSum, mainCtrl, posNum)
+            cmds.connectAttr( transSum + '.output3D', TranJntChain[num] + '.translate' )
             
 
             # set last input to base value of 1, OOP methods does not work on sub attributes of layeredTexture
@@ -323,11 +327,12 @@ class TentacleAutoRig(object):
             
             
             # connect scale multiplier to joint scale YZ
-            cmds.connectAttr(scaleMultiplier + ".outColor", jnt + ".scale")
+            cmds.connectAttr(scaleMultiplier + ".outColor", skinJntChain[num] + ".scale")
             #链接ik骨骼的控制到fk骨骼
-            cmds.connectAttr(ikTfkJnt[j-1] + ".translate", jnt + ".translate")
+            cmds.connectAttr(ikTfkJnt[j-1] + ".translate", skinJntChain[num] + ".translate")
             #cmds.pointConstraint(ikTfkJnt[j-1],jnt, mo = True)
             j = j+1
+        cmds.sets(TranJntChain, name = "SkinJnt")
 
 
     def creatRollFun(self, jnt, pulsNode, mainCon, posNum):
@@ -510,9 +515,9 @@ class TentacleAutoRig(object):
             
             cmds.setAttr(currentCtrl[0] + ".overrideEnabled", True)
             cmds.setAttr(currentCtrl[0] + ".overrideColor", 4)
-            cmds.setAttr(currentCtrl[0] + ".translateX", lock = True, keyable = False, channelBox = False)
-            cmds.setAttr(currentCtrl[0] + ".translateY", lock = True, keyable = False, channelBox = False)
-            cmds.setAttr(currentCtrl[0] + ".translateZ", lock = True, keyable = False, channelBox = False)
+            # cmds.setAttr(currentCtrl[0] + ".translateX", lock = True, keyable = False, channelBox = False)
+            # cmds.setAttr(currentCtrl[0] + ".translateY", lock = True, keyable = False, channelBox = False)
+            # cmds.setAttr(currentCtrl[0] + ".translateZ", lock = True, keyable = False, channelBox = False)
             cmds.setAttr(currentCtrl[0] + ".scaleX", lock = True)
 
             cmds.addAttr( longName='rotateStrength', attributeType='float', keyable=True, defaultValue=1)
@@ -543,12 +548,12 @@ class TentacleAutoRig(object):
             cmds.connectAttr(currentCtrl[0] + ".rotateStrength", rotStrengthMul + ".input2Y", f = True)
             cmds.connectAttr(currentCtrl[0] + ".rotateStrength", rotStrengthMul + ".input2Z", f = True)
 
-            # #设置位移强度属性
-            # transStrengthMul = cmds.shadingNode( 'multiplyDivide', asUtility = True, n = str( currentCtrl[0] ) + "_transStrength_mult" )
-            # cmds.connectAttr(currentCtrl[0] + ".translate", transStrengthMul + ".input1")
-            # cmds.connectAttr(currentCtrl[0] + ".transStrength", transStrengthMul + ".input2X", f = True)
-            # cmds.connectAttr(currentCtrl[0] + ".transStrength", transStrengthMul + ".input2Y", f = True)
-            # cmds.connectAttr(currentCtrl[0] + ".transStrength", transStrengthMul + ".input2Z", f = True)
+            #设置位移强度属性
+            transStrengthMul = cmds.shadingNode( 'multiplyDivide', asUtility = True, n = str( currentCtrl[0] ) + "_transStrength_mult" )
+            cmds.connectAttr(currentCtrl[0] + ".translate", transStrengthMul + ".input1")
+            cmds.connectAttr(currentCtrl[0] + ".transStrength", transStrengthMul + ".input2X", f = True)
+            cmds.connectAttr(currentCtrl[0] + ".transStrength", transStrengthMul + ".input2Y", f = True)
+            cmds.connectAttr(currentCtrl[0] + ".transStrength", transStrengthMul + ".input2Z", f = True)
 
             #设置控制器位置属性
             ctrlPosRange = cmds.shadingNode( 'setRange', asUtility = True, n=currentCtrl[0] + '_ctrlPosRange' )
@@ -590,13 +595,13 @@ class TentacleAutoRig(object):
         cmds.setAttr(absSqrt + '.operation', 3)
         remapDist = cmds.shadingNode('remapValue', asUtility = True, n=prefix + 'remapDist')
         rotateMultiplier = cmds.shadingNode('multiplyDivide', asUtility = True, n = prefix + 'roInfl_mult')
-        # transMultiplier = cmds.shadingNode('multiplyDivide', asUtility = True, n = prefix + 'transInfl_mult')
+        transMultiplier = cmds.shadingNode('multiplyDivide', asUtility = True, n = prefix + 'transInfl_mult')
         
         # get existing offset nodes which were created in controller function
         ctrlPosRange = cmds.listConnections( ctrl + ".position", exactType = True, type = 'setRange' )[0]
         jntposZeroCompensate = cmds.listConnections( ctrlPosRange, exactType = True, type = 'plusMinusAverage' )[0]
         rotateStrengthMultiplier = cmds.listConnections( ctrl, exactType = True, type = 'multiplyDivide' )[1]
-        # transStrengthMultiplier = cmds.listConnections( ctrl + ".translate", exactType = True, type = 'multiplyDivide' )[0]
+        transStrengthMultiplier = cmds.listConnections( ctrl + ".translate", exactType = True, type = 'multiplyDivide' )[0]
 
         ctrlRadusRange = cmds.listConnections(ctrl + ".radius", exactType = True, type = 'setRange' )[0]
         
@@ -622,13 +627,13 @@ class TentacleAutoRig(object):
         cmds.connectAttr(remapDist + '.outValue', rotateMultiplier + '.input2Y', f=1)
         cmds.connectAttr(remapDist + '.outValue', rotateMultiplier + '.input2Z', f=1)
         
-        # # connect strength multiplier to rotate multiplier
-        # cmds.connectAttr(transStrengthMultiplier + ".output", transMultiplier + ".input1")
-        # cmds.connectAttr(remapDist + '.outValue', transMultiplier + '.input2X', f=1)
-        # cmds.connectAttr(remapDist + '.outValue', transMultiplier + '.input2Y', f=1)
-        # cmds.connectAttr(remapDist + '.outValue', transMultiplier + '.input2Z', f=1)
-        # print('Created ' + ctrl + '--' + jnt + ' output.')
-        return rotateMultiplier
+        # connect strength multiplier to rotate multiplier
+        cmds.connectAttr(transStrengthMultiplier + ".output", transMultiplier + ".input1")
+        cmds.connectAttr(remapDist + '.outValue', transMultiplier + '.input2X', f=1)
+        cmds.connectAttr(remapDist + '.outValue', transMultiplier + '.input2Y', f=1)
+        cmds.connectAttr(remapDist + '.outValue', transMultiplier + '.input2Z', f=1)
+        print('Created ' + ctrl + '--' + jnt + ' output.')
+        return rotateMultiplier, transMultiplier
 
     # def creatBufGrp(self, sel):
     #     Bufs = []

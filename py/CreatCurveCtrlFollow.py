@@ -143,7 +143,7 @@ class CreatCurveCtrl():
         try:
             poc = cmds.pointOnCurve(curve, ch = True)
             poc = cmds.rename(poc, nodeName)
-            cmds.setAttr(poc + ".turnOnPercentage", 1);
+            cmds.setAttr(poc + ".turnOnPercentage", 1)
             print poc
             return poc
         except Exception as e:

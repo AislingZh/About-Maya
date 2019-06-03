@@ -1,10 +1,11 @@
 ######## Tentacle AutoRigger ########
-#	Version 1.00
-# 	Version: 15.04.2019
+#	Version 1.1.5
+# 	last rev: 27.04.2019
 # 	Author: AislingChow
 #	融合了variable FK 、IK、非线性变形变形器、头发动力学的多种控制
 ############
-#  直接拖拽进maya的self或者脚本编辑器里，运行
+#  测试于maya 2017
+#  使用：直接拖拽进maya的self或者脚本编辑器里，运行
 #
 ########################################
 
@@ -131,10 +132,15 @@ class TentacleAutoRig(object):
             
         self.BuildAutoRig(IdName, inputCurve, numberOfCtrls, numberOfJnts)
         return
-
+    def NameOnly(self, IdName):
+        grp = IdName + '_ctrlGrp'
+        if cmds.objExists(grp):
+            raise RuntimeError("%s already has be in, change another name?"%IdName)
 
     # Utility functions
     def BuildAutoRig(self, IdName = "Tentacle", inputCurve = cmds.ls(sl = True) , CtrlNum = 3, JntNUm = 10):
+
+        self.NameOnly(IdName)
 
         #根据曲线和设定的骨骼数创建骨骼
         skinJntChain = self.CreatJntChain(inputCurve, JntNUm)
@@ -150,7 +156,7 @@ class TentacleAutoRig(object):
 
         #复制曲线制作hair动力学系统
         DynCurve = cmds.duplicate(inputCurve, name = IdName + '_DynCurve')[0]
-        DynNucleus = self.CreatDynSys(DynCurve)
+        DynNucleus = self.CreatDynSys(DynCurve, IdName)
 
         #复制曲线制作非线性变形器效果
         deformCurve = cmds.duplicate(inputCurve, name = IdName + '_deformCurve')[0]
@@ -176,7 +182,7 @@ class TentacleAutoRig(object):
         
         
         #创建主控制器   ！！！！添加控制的相关属性！！！
-        mainCtrl = cmds.curve( name="MainCtrl", d = 1, p = [(-1,1,1),(1,1,1),(1,1,-1),(-1,1,-1),(-1,1,1),(-1,-1,1),(-1,-1,-1),(1,-1,-1),(1,-1,1),(-1,-1,1),(1,-1,1),(1,1,1),(1,1,-1),(1,-1,-1),(-1,-1,-1),(-1,1,-1)])
+        mainCtrl = cmds.curve( name=IdName + "MainCtrl", d = 1, p = [(-1,1,1),(1,1,1),(1,1,-1),(-1,1,-1),(-1,1,1),(-1,-1,1),(-1,-1,-1),(1,-1,-1),(1,-1,1),(-1,-1,1),(1,-1,1),(1,1,1),(1,1,-1),(1,-1,-1),(-1,-1,-1),(-1,1,-1)])
         mainCtrlShape = cmds.listRelatives(mainCtrl, s = True)[0]
 
         cmds.addAttr(mainCtrl, longName='ZLimit', attributeType='float', keyable=True, defaultValue=0)
@@ -332,7 +338,7 @@ class TentacleAutoRig(object):
             cmds.connectAttr(ikTfkJnt[j-1] + ".translate", skinJntChain[num] + ".translate")
             #cmds.pointConstraint(ikTfkJnt[j-1],jnt, mo = True)
             j = j+1
-        cmds.sets(TranJntChain, name = "SkinJnt")
+        cmds.sets(TranJntChain, name =IdName +  "SkinJnt")
 
 
     def creatRollFun(self, jnt, pulsNode, mainCon, posNum):
@@ -816,12 +822,12 @@ class TentacleAutoRig(object):
         return deformGrps
 
 
-    def CreatDynSys(self, dynCurve):
+    def CreatDynSys(self, dynCurve, IdName):
         
         ## test 手动创建动力学相关节点并链接，返回解算器用于控制器链接开关
 
-        orgCurve = cmds.duplicate(dynCurve, rr = True, name = dynCurve + '_start')
-        outCurve = cmds.duplicate(dynCurve, rr = True, name = dynCurve + '_out')
+        orgCurve = cmds.duplicate(dynCurve, rr = True, name = IdName + '_dynStart')
+        outCurve = cmds.duplicate(dynCurve, rr = True, name = IdName + '_dynOut')
         orgCurveShape = cmds.listRelatives(orgCurve, s = True)[0]
         outCurveShape = cmds.listRelatives(outCurve, s = True)[0]
 
@@ -833,16 +839,16 @@ class TentacleAutoRig(object):
         # cmds.connectAttr(rebuildNode + ".outputCurve", orgCurveShape + ".create")
 
 
-        follicleNode = cmds.createNode('follicle', name=dynCurve + "_follicle")
+        follicleNode = cmds.createNode('follicle', name=IdName + "_follicle")
         cmds.connectAttr( orgCurveShape + ".local", follicleNode + ".startPosition")
         cmds.connectAttr( orgCurve[0] + ".worldMatrix[0]", follicleNode + ".startPositionMatrix")
         cmds.connectAttr( follicleNode + ".outCurve", outCurveShape + ".create")
 
-        hairSystemNode = cmds.createNode('hairSystem', name=dynCurve + "_hairSystem")
+        hairSystemNode = cmds.createNode('hairSystem', name=IdName + "_hairSystem")
         cmds.connectAttr( follicleNode + ".outHair", hairSystemNode + ".inputHair[0]")
         cmds.connectAttr( hairSystemNode + ".outputHair[0]", follicleNode + ".currentPosition")
 
-        nucleusNode = cmds.createNode('nucleus', name="_nucleus")
+        nucleusNode = cmds.createNode('nucleus', name=IdName + "_nucleus")
         cmds.connectAttr( hairSystemNode + ".currentState", nucleusNode + ".inputActive[0]")
         cmds.connectAttr( hairSystemNode + ".startState", nucleusNode + ".inputActiveStart[0]")
         cmds.connectAttr( nucleusNode + ".outputObjects[0]", hairSystemNode + ".nextState")
@@ -852,8 +858,8 @@ class TentacleAutoRig(object):
         cmds.connectAttr("time1.outTime", nucleusNode + ".currentTime")
 
 
-        DynGrp = cmds.group(orgCurve, outCurve, follicleNode, hairSystemNode, nucleusNode, name = dynCurve + "_DynGrp")
-        cmds.wire(dynCurve, w = outCurve, name = "ikDynWire")[0]
+        DynGrp = cmds.group(orgCurve, outCurve, follicleNode, hairSystemNode, nucleusNode, name = IdName + "_DynGrp")
+        cmds.wire(dynCurve, w = outCurve, name =IdName + "ikDynWire")[0]
 
         return nucleusNode
 
@@ -887,7 +893,7 @@ class TentacleAutoRig(object):
         CCurve = cmds.duplicate(inputCurve, name = outputCurve + '_CC')[0]
         CCurve = cmds.rebuildCurve(CCurve, d = 3, s = cvNum - 1)[0]
 
-        curveGRp = cmds.group(CCurve, outputCurve, name ='ikCtrlcurve_Grp', world = True)
+        curveGRp = cmds.group(CCurve, outputCurve, name =IdName + 'ikCtrlcurve_Grp', world = True)
 
         cHnadleGrp = cmds.group(name = CCurve + '_cHandle', empty = True, world = True)
         IKCtrlGrp = cmds.group(name = IdName + '_ikCtrlGrp', empty = True, world = True)
@@ -954,10 +960,10 @@ class TentacleAutoRig(object):
             cmds.parent(offsetGrp, IKCtrlGrp, r = True)
             
         #用cc曲线包裹输出的ik曲线
-        wireNode = cmds.wire(outputCurve, w = CCurve, name = "ikCtrlWire")[0]
+        wireNode = cmds.wire(outputCurve, w = CCurve, name =IdName + "ikCtrlWire")[0]
         cmds.setAttr(wireNode + ".dropoffDistance[0]", 99999999)
 
-        IKCtrlSysGrp = cmds.group(curveGRp, cHnadleGrp, ikFollGrps, name ='IKCtrlSys_Grp', world = True)
+        IKCtrlSysGrp = cmds.group(curveGRp, cHnadleGrp, ikFollGrps, name =IdName + 'IKCtrlSys_Grp', world = True)
 
         return outputCurve, IKCtrlGrp
         
